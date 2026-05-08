@@ -5,14 +5,19 @@ import ghostLogo from "@/assets/ghost-logo.png";
 import { toast } from "sonner";
 import { useWalletStore } from "@/store/wallet-store";
 import { OnboardingView } from "./onboarding-view";
+import { LockScreen } from "./lock-screen";
 
 export function WalletShell({ children, headerAction }: { children: React.ReactNode; headerAction?: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
   const location = useLocation();
-  const { address, mnemonic, privateKey, logout } = useWalletStore();
+  const { address, mnemonic, privateKey, logout, isUnlocked, username } = useWalletStore();
 
   if (!address) {
     return <OnboardingView />;
+  }
+
+  if (!isUnlocked) {
+    return <LockScreen />;
   }
 
   const truncateAddress = (addr: string) => {
@@ -64,7 +69,7 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
               <img src={ghostLogo} alt="" width={28} height={28} className="size-7" />
             </span>
             <div className="leading-tight">
-              <div className="text-xs text-muted-foreground">Ví Sepolia</div>
+              <div className="text-xs text-muted-foreground font-medium">{username || "Ví Sepolia"}</div>
               <div className="flex items-center gap-1.5 text-sm font-semibold">
                 {truncateAddress(address)}
                 {copied ? <Check className="size-3 text-success" /> : <Copy className="size-3 text-muted-foreground" />}

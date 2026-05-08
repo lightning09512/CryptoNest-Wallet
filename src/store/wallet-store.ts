@@ -8,23 +8,31 @@ interface WalletState {
   mnemonic: string | null;
   balance: string;
   kcoinBalance: number;
-  createWallet: () => void;
-  importWallet: (privateKey: string) => boolean;
+  pin: string | null;
+  username: string | null;
+  isUnlocked: boolean;
+  createWallet: (pin: string, username: string) => void;
+  importWallet: (input: string, pin: string, username: string) => boolean;
   logout: () => void;
   setBalance: (balance: string) => void;
   addKCoin: (amount: number) => void;
+  unlockWallet: (pin: string) => boolean;
+  lockWallet: () => void;
 }
 
 export const useWalletStore = create<WalletState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       address: null,
       privateKey: null,
       mnemonic: null,
       balance: '0.00',
       kcoinBalance: 0,
+      pin: null,
+      username: null,
+      isUnlocked: false,
       
-      createWallet: () => {
+      createWallet: (pin: string, username: string) => {
         const wallet = ethers.Wallet.createRandom();
         set({
           address: wallet.address,
@@ -32,10 +40,13 @@ export const useWalletStore = create<WalletState>()(
           mnemonic: wallet.mnemonic?.phrase || null,
           balance: '0.00',
           kcoinBalance: 0,
+          pin,
+          username,
+          isUnlocked: true,
         });
       },
 
-      importWallet: (input: string) => {
+      importWallet: (input: string, pin: string, username: string) => {
         try {
           let wallet;
           const trimmed = input.trim();
@@ -54,6 +65,9 @@ export const useWalletStore = create<WalletState>()(
             mnemonic: wallet.mnemonic?.phrase || null,
             balance: '0.00',
             kcoinBalance: 0,
+            pin,
+            username,
+            isUnlocked: true,
           });
           return true;
         } catch (error) {
@@ -63,7 +77,7 @@ export const useWalletStore = create<WalletState>()(
       },
 
       logout: () => {
-        set({ address: null, privateKey: null, mnemonic: null, balance: '0.00', kcoinBalance: 0 });
+        set({ address: null, privateKey: null, mnemonic: null, balance: '0.00', kcoinBalance: 0, pin: null, username: null, isUnlocked: false });
       },
 
       setBalance: (balance: string) => {
@@ -73,9 +87,25 @@ export const useWalletStore = create<WalletState>()(
       addKCoin: (amount: number) => {
         set((state) => ({ kcoinBalance: state.kcoinBalance + amount }));
       },
+
+      unlockWallet: (inputPin: string) => {
+        const { pin } = get();
+        if (pin === inputPin) {
+          set({ isUnlocked: true });
+          return true;
+        }
+        return false;
+      },
+
+      lockWallet: () => {
+        set({ isUnlocked: false });
+      }
     }),
     {
       name: 'cryptonest-wallet-storage',
+      partialize: (state) => Object.fromEntries(
+        Object.entries(state).filter(([key]) => key !== 'isUnlocked')
+      ),
     }
   )
 );
