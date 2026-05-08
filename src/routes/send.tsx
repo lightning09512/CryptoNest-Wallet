@@ -20,7 +20,7 @@ export const Route = createFileRoute("/send")({
 function SendPage() {
   const { token: selectedToken } = Route.useSearch();
   const nav = useNavigate();
-  const { privateKey, balance } = useWalletStore();
+  const { privateKey, balance, addTx } = useWalletStore();
   
   // Mặc định luôn dùng Sepolia ETH cho màn hình Send thực tế của đồ án
   const [token, setToken] = useState({ symbol: "ETH", name: "Sepolia ETH", priceUsd: 3000, balance: parseFloat(balance || "0") });
@@ -45,6 +45,19 @@ function SendPage() {
     setIsSending(false);
 
     if (result.success) {
+      // Log local transaction
+      addTx({
+        id: `send-${Date.now()}`,
+        type: "send",
+        token: "ETH",
+        amount: parseFloat(amount),
+        to: to,
+        from: "Ví của bạn",
+        date: new Date().toISOString(),
+        status: "confirmed",
+        hash: result.hash || `0x${Math.random().toString(16).slice(2, 10)}...`,
+      });
+
       toast.success(
         <div className="flex flex-col gap-1">
           <span>Giao dịch thành công!</span>

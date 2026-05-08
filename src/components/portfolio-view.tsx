@@ -32,6 +32,7 @@ export function PortfolioView() {
     balance: ethAmount,
     priceUsd: ethPriceUsd,
     color: "#627EEA",
+    icon: "/img/eth.png",
   };
 
   const kcoinToken = {
@@ -40,6 +41,7 @@ export function PortfolioView() {
     balance: kcoinBalance,
     priceUsd: kcoinPriceUsd,
     color: "#E83A65",
+    icon: "/img/khanh.jpg",
   };
 
   // Combine real/local tokens with the mock tokens (ordered by Market Cap, KCoin at the bottom)
@@ -141,12 +143,16 @@ export function PortfolioView() {
             return (
               <li key={t.symbol}>
                 <button className="w-full flex items-center gap-3 py-3 hover:bg-secondary/40 -mx-2 px-2 rounded-xl transition-colors text-left">
-                  <span
-                    className="size-10 rounded-full flex items-center justify-center text-white font-bold text-[11px] shrink-0"
-                    style={{ backgroundColor: t.color }}
-                  >
-                    {t.symbol}
-                  </span>
+                  {t.icon ? (
+                    <img src={t.icon} alt={t.symbol} className="size-10 rounded-full shrink-0 object-cover bg-white" />
+                  ) : (
+                    <span
+                      className="size-10 rounded-full flex items-center justify-center text-white font-bold text-[11px] shrink-0"
+                      style={{ backgroundColor: t.color }}
+                    >
+                      {t.symbol.slice(0, 3)}
+                    </span>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate text-[15px]">{t.name}</div>
                     <div className="text-xs text-muted-foreground tabular-nums">

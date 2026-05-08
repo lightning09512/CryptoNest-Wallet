@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ethers } from 'ethers';
+import type { Tx } from '@/lib/wallet-data';
 
 interface WalletState {
   address: string | null;
@@ -11,6 +12,7 @@ interface WalletState {
   pin: string | null;
   username: string | null;
   isUnlocked: boolean;
+  localTxs: Tx[];
   createWallet: (pin: string, username: string) => void;
   importWallet: (input: string, pin: string, username: string) => boolean;
   logout: () => void;
@@ -18,6 +20,7 @@ interface WalletState {
   addKCoin: (amount: number) => void;
   unlockWallet: (pin: string) => boolean;
   lockWallet: () => void;
+  addTx: (tx: Tx) => void;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -31,6 +34,7 @@ export const useWalletStore = create<WalletState>()(
       pin: null,
       username: null,
       isUnlocked: false,
+      localTxs: [],
       
       createWallet: (pin: string, username: string) => {
         const wallet = ethers.Wallet.createRandom();
@@ -43,6 +47,7 @@ export const useWalletStore = create<WalletState>()(
           pin,
           username,
           isUnlocked: true,
+          localTxs: [],
         });
       },
 
@@ -68,6 +73,7 @@ export const useWalletStore = create<WalletState>()(
             pin,
             username,
             isUnlocked: true,
+            localTxs: [],
           });
           return true;
         } catch (error) {
@@ -77,7 +83,7 @@ export const useWalletStore = create<WalletState>()(
       },
 
       logout: () => {
-        set({ address: null, privateKey: null, mnemonic: null, balance: '0.00', kcoinBalance: 0, pin: null, username: null, isUnlocked: false });
+        set({ address: null, privateKey: null, mnemonic: null, balance: '0.00', kcoinBalance: 0, pin: null, username: null, isUnlocked: false, localTxs: [] });
       },
 
       setBalance: (balance: string) => {
@@ -99,6 +105,10 @@ export const useWalletStore = create<WalletState>()(
 
       lockWallet: () => {
         set({ isUnlocked: false });
+      },
+
+      addTx: (tx: Tx) => {
+        set((state) => ({ localTxs: [tx, ...state.localTxs] }));
       }
     }),
     {

@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowUp, ArrowDown, ArrowLeftRight, FileCode } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowLeftRight, FileCode, Loader2, Clock } from "lucide-react";
 import { WalletShell } from "@/components/wallet-shell";
-import { TXS, type Tx } from "@/lib/wallet-data";
+import type { Tx } from "@/lib/wallet-data";
+import { useWalletStore } from "@/store/wallet-store";
+import { useEffect, useState } from "react";
+import { ethers } from "ethers";
 
 export const Route = createFileRoute("/activity")({
-  head: () => ({ meta: [{ title: "Hoạt động — Fox Wallet" }] }),
+  head: () => ({ meta: [{ title: "Hoạt động — CryptoNest" }] }),
   component: ActivityPage,
 });
 
@@ -18,56 +21,130 @@ const iconFor = (type: Tx["type"]) => {
 };
 
 const labelFor = (type: Tx["type"]) => ({
-  send: "Đã gửi", receive: "Đã nhận", swap: "Swap", contract: "Hợp đồng",
+  send: "Đã gửi", receive: "Đã nhận", swap: "Hoán đổi", contract: "Hợp đồng",
 }[type]);
 
 function ActivityPage() {
-  const groups = TXS.reduce((acc, tx) => {
-    const day = new Date(tx.date).toLocaleDateString("vi-VN", { day: "numeric", month: "long" });
+  const { address, localTxs } = useWalletStore();
+  const [allTxs, setAllTxs] = useState<Tx[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!address) return;
+    
+    let isMounted = true;
+    
+    const fetchTxs = async () => {
+      try {
+        const res = await fetch(`https://api-sepolia.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=50&sort=desc`);
+        const data = await res.json();
+        
+        if (data.status === "1" && isMounted) {
+          const etherscanTxs: Tx[] = data.result.map((tx: any) => ({
+            id: tx.hash,
+            type: tx.from.toLowerCase() === address.toLowerCase() ? "send" : "receive",
+            token: "ETH",
+            amount: parseFloat(ethers.formatEther(tx.value)),
+            to: tx.to,
+            from: tx.from,
+            date: new Date(parseInt(tx.timeStamp) * 1000).toISOString(),
+            status: tx.isError === "0" ? "confirmed" : "failed",
+            hash: tx.hash,
+          }));
+
+          // Merge localTxs and etherscanTxs, deduplicate by hash
+          const combined = [...localTxs, ...etherscanTxs];
+          const uniqueTxs = Array.from(new Map(combined.map(item => [item.hash, item])).values());
+          
+          // Sort by date desc
+          uniqueTxs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          
+          setAllTxs(uniqueTxs);
+        } else if (data.message === "No transactions found" && isMounted) {
+          setAllTxs(localTxs); // If no etherscan txs, just show local
+        }
+      } catch (e) {
+        console.error("Failed to fetch txs", e);
+        if (isMounted) setAllTxs(localTxs); // fallback to local
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchTxs();
+
+    return () => { isMounted = false };
+  }, [address, localTxs]);
+
+  const groups = allTxs.reduce((acc, tx) => {
+    const day = new Date(tx.date).toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" });
     (acc[day] ||= []).push(tx);
     return acc;
   }, {} as Record<string, Tx[]>);
 
   return (
     <WalletShell>
-      <div className="p-4">
+      <div className="p-4 min-h-[calc(100vh-140px)]">
         <h1 className="text-2xl font-bold mb-4">Hoạt động</h1>
-        <div className="space-y-5">
-          {Object.entries(groups).map(([day, txs]) => (
-            <section key={day}>
-              <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">{day}</h2>
-              <ul className="rounded-2xl border bg-card divide-y overflow-hidden">
-                {txs.map((tx) => {
-                  const Icon = iconFor(tx.type);
-                  const positive = tx.type === "receive";
-                  return (
-                    <li key={tx.id} className="flex items-center gap-3 p-3 hover:bg-secondary/60 transition-colors">
-                      <span className={`size-10 rounded-full flex items-center justify-center shrink-0 ${
-                        positive ? "bg-success/15 text-success" : "bg-secondary text-foreground"
-                      }`}>
-                        <Icon className="size-4" />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-baseline gap-2">
-                          <span className="font-medium truncate">{labelFor(tx.type)}</span>
-                          <span className={`font-semibold tabular-nums text-sm ${positive ? "text-success" : ""}`}>
-                            {positive ? "+" : tx.type === "send" ? "-" : ""}{tx.amount} {tx.token}
-                          </span>
+        
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+            <Loader2 className="size-8 animate-spin mb-4 text-primary" />
+            <p>Đang tải dữ liệu mạng lưới...</p>
+          </div>
+        ) : allTxs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground text-center">
+            <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+              <Clock className="size-8 opacity-50" />
+            </div>
+            <p className="font-medium">Chưa có giao dịch nào</p>
+            <p className="text-sm opacity-80 mt-1">Các giao dịch của bạn sẽ xuất hiện ở đây.</p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {Object.entries(groups).map(([day, txs]) => (
+              <section key={day}>
+                <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">{day}</h2>
+                <ul className="rounded-2xl border bg-card divide-y overflow-hidden">
+                  {txs.map((tx) => {
+                    const Icon = iconFor(tx.type);
+                    const positive = tx.type === "receive";
+                    return (
+                      <li key={tx.id} className="flex items-center gap-3 p-3 hover:bg-secondary/60 transition-colors">
+                        <span className={`size-10 rounded-full flex items-center justify-center shrink-0 ${
+                          positive ? "bg-success/15 text-success" : "bg-secondary text-foreground"
+                        }`}>
+                          <Icon className="size-4" />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-baseline gap-2">
+                            <span className="font-medium truncate">{labelFor(tx.type)}</span>
+                            <span className={`font-semibold tabular-nums text-sm ${positive ? "text-success" : ""}`}>
+                              {positive ? "+" : tx.type === "send" ? "-" : ""}{tx.amount.toFixed(4).replace(/\.?0+$/, '')} {tx.token}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <a 
+                              href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-mono hover:text-primary transition-colors hover:underline"
+                            >
+                              {tx.hash.slice(0, 10)}...
+                            </a>
+                            <span className={tx.status === "pending" ? "text-primary" : tx.status === "failed" ? "text-destructive" : ""}>
+                              {tx.status === "confirmed" ? "Đã xác nhận" : tx.status === "pending" ? "Đang chờ" : "Thất bại"}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span className="font-mono">{tx.hash}</span>
-                          <span className={tx.status === "pending" ? "text-primary" : tx.status === "failed" ? "text-destructive" : ""}>
-                            {tx.status === "confirmed" ? "Đã xác nhận" : tx.status === "pending" ? "Đang chờ" : "Thất bại"}
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     </WalletShell>
   );

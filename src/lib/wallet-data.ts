@@ -5,6 +5,7 @@ export type Token = {
   priceUsd: number;
   change24h: number;
   color: string;
+  icon?: string;
 };
 
 export type Tx = {
@@ -23,22 +24,22 @@ export const WALLET_ADDRESS = "0x7A3f9C2bE4d8a51F3d2bC9aE8f1D6b9C4eA7F123";
 
 // Tokens displayed on main page (large market cap only)
 export const TOKENS: Token[] = [
-  { symbol: "BTC", name: "Bitcoin", balance: 0, priceUsd: 68420.0, change24h: 0, color: "oklch(0.7 0.18 60)" },
-  { symbol: "ETH", name: "Ethereum", balance: 0, priceUsd: 3420.55, change24h: 0, color: "oklch(0.55 0.18 270)" },
-  { symbol: "BNB", name: "Binance Coin", balance: 0, priceUsd: 612.45, change24h: 0, color: "oklch(0.65 0.15 45)" },
-  { symbol: "XRP", name: "Ripple", balance: 0, priceUsd: 0.52, change24h: 0, color: "oklch(0.6 0.2 340)" },
-  { symbol: "SOL", name: "Solana", balance: 0, priceUsd: 168.42, change24h: 0, color: "oklch(0.7 0.2 295)" },
-  { symbol: "DOGE", name: "Dogecoin", balance: 0, priceUsd: 0.16, change24h: 0, color: "oklch(0.7 0.15 35)" },
+  { symbol: "BTC", name: "Bitcoin", balance: 0, priceUsd: 68420.0, change24h: 0, color: "oklch(0.7 0.18 60)", icon: "/img/bitcoin.png" },
+  { symbol: "ETH", name: "Ethereum", balance: 0, priceUsd: 3420.55, change24h: 0, color: "oklch(0.55 0.18 270)", icon: "/img/eth.png" },
+  { symbol: "BNB", name: "Binance Coin", balance: 0, priceUsd: 612.45, change24h: 0, color: "oklch(0.65 0.15 45)", icon: "/img/bnb.png" },
+  { symbol: "XRP", name: "Ripple", balance: 0, priceUsd: 0.52, change24h: 0, color: "oklch(0.6 0.2 340)", icon: "/img/xrp.png" },
+  { symbol: "SOL", name: "Solana", balance: 0, priceUsd: 168.42, change24h: 0, color: "oklch(0.7 0.2 295)", icon: "/img/solana.png" },
+  { symbol: "DOGE", name: "Dogecoin", balance: 0, priceUsd: 0.16, change24h: 0, color: "oklch(0.7 0.15 35)", icon: "/img/doge.png" },
 ];
 
 // All tokens including stablecoins and others for search functionality
 export const ALL_TOKENS: Token[] = [
-  { symbol: "BTC", name: "Bitcoin", balance: 0, priceUsd: 68420.0, change24h: 0, color: "oklch(0.7 0.18 60)" },
-  { symbol: "ETH", name: "Ethereum", balance: 0, priceUsd: 3420.55, change24h: 0, color: "oklch(0.55 0.18 270)" },
-  { symbol: "BNB", name: "Binance Coin", balance: 0, priceUsd: 612.45, change24h: 0, color: "oklch(0.65 0.15 45)" },
-  { symbol: "XRP", name: "Ripple", balance: 0, priceUsd: 0.52, change24h: 0, color: "oklch(0.6 0.2 340)" },
-  { symbol: "SOL", name: "Solana", balance: 0, priceUsd: 168.42, change24h: 0, color: "oklch(0.7 0.2 295)" },
-  { symbol: "DOGE", name: "Dogecoin", balance: 0, priceUsd: 0.16, change24h: 0, color: "oklch(0.7 0.15 35)" },
+  { symbol: "BTC", name: "Bitcoin", balance: 0, priceUsd: 68420.0, change24h: 0, color: "oklch(0.7 0.18 60)", icon: "/img/bitcoin.png" },
+  { symbol: "ETH", name: "Ethereum", balance: 0, priceUsd: 3420.55, change24h: 0, color: "oklch(0.55 0.18 270)", icon: "/img/eth.png" },
+  { symbol: "BNB", name: "Binance Coin", balance: 0, priceUsd: 612.45, change24h: 0, color: "oklch(0.65 0.15 45)", icon: "/img/bnb.png" },
+  { symbol: "XRP", name: "Ripple", balance: 0, priceUsd: 0.52, change24h: 0, color: "oklch(0.6 0.2 340)", icon: "/img/xrp.png" },
+  { symbol: "SOL", name: "Solana", balance: 0, priceUsd: 168.42, change24h: 0, color: "oklch(0.7 0.2 295)", icon: "/img/solana.png" },
+  { symbol: "DOGE", name: "Dogecoin", balance: 0, priceUsd: 0.16, change24h: 0, color: "oklch(0.7 0.15 35)", icon: "/img/doge.png" },
   { symbol: "USDC", name: "USD Coin", balance: 0, priceUsd: 1.00, change24h: 0, color: "oklch(0.5 0.18 200)" },
   { symbol: "USDT", name: "Tether", balance: 0, priceUsd: 1.00, change24h: 0, color: "oklch(0.5 0.18 50)" },
   { symbol: "ADA", name: "Cardano", balance: 0, priceUsd: 0.48, change24h: 0, color: "oklch(0.6 0.15 180)" },
