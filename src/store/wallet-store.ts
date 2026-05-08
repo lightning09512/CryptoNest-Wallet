@@ -35,21 +35,29 @@ export const useWalletStore = create<WalletState>()(
         });
       },
 
-      importWallet: (pk: string) => {
+      importWallet: (input: string) => {
         try {
-          // Normalize the private key (add 0x if missing)
-          const formattedPk = pk.startsWith('0x') ? pk : `0x${pk}`;
-          const wallet = new ethers.Wallet(formattedPk);
+          let wallet;
+          const trimmed = input.trim();
+          // Kiểm tra nếu là Seed Phrase (có dấu cách)
+          if (trimmed.includes(' ')) {
+            wallet = ethers.Wallet.fromPhrase(trimmed);
+          } else {
+            // Ngược lại giả định là Private Key
+            const formattedPk = trimmed.startsWith('0x') ? trimmed : `0x${trimmed}`;
+            wallet = new ethers.Wallet(formattedPk);
+          }
+          
           set({
             address: wallet.address,
             privateKey: wallet.privateKey,
-            mnemonic: null,
+            mnemonic: wallet.mnemonic?.phrase || null,
             balance: '0.00',
             kcoinBalance: 0,
           });
           return true;
         } catch (error) {
-          console.error("Invalid private key", error);
+          console.error("Invalid wallet input", error);
           return false;
         }
       },
