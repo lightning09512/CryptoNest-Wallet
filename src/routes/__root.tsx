@@ -101,7 +101,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body style={{ minWidth: "360px", minHeight: "600px", backgroundColor: "#1c1c1c" }}>
         {children}
         <Scripts />
       </body>

@@ -1,16 +1,26 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Copy, Check, Monitor, Maximize2, Search, Home, ArrowLeftRight, Clock, SlidersHorizontal } from "lucide-react";
+import { Copy, Check, Monitor, Maximize2, Search, Home, ArrowLeftRight, Clock, SlidersHorizontal, LogOut } from "lucide-react";
 import { useState } from "react";
 import ghostLogo from "@/assets/ghost-logo.png";
-import { WALLET_ADDRESS } from "@/lib/wallet-data";
 import { toast } from "sonner";
+import { useWalletStore } from "@/store/wallet-store";
+import { OnboardingView } from "./onboarding-view";
 
 export function WalletShell({ children, headerAction }: { children: React.ReactNode; headerAction?: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
   const location = useLocation();
+  const { address, logout } = useWalletStore();
+
+  if (!address) {
+    return <OnboardingView />;
+  }
+
+  const truncateAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
   const copy = () => {
-    navigator.clipboard.writeText(WALLET_ADDRESS);
+    navigator.clipboard.writeText(address);
     setCopied(true);
     toast.success("Đã sao chép địa chỉ");
     setTimeout(() => setCopied(false), 1500);
@@ -20,7 +30,7 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
     { to: "/", label: "Trang chủ", icon: Home },
     { to: "/swap", label: "Swap", icon: ArrowLeftRight },
     { to: "/activity", label: "Hoạt động", icon: Clock },
-    { to: "/nfts", label: "Khám phá", icon: Search },
+    { to: "/explore", label: "Khám phá", icon: Search },
   ];
 
   return (
@@ -36,9 +46,9 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
               <img src={ghostLogo} alt="" width={28} height={28} className="size-7" />
             </span>
             <div className="leading-tight">
-              <div className="text-xs text-muted-foreground">@lightning095</div>
+              <div className="text-xs text-muted-foreground">Ví Sepolia</div>
               <div className="flex items-center gap-1.5 text-sm font-semibold">
-                Account 1
+                {truncateAddress(address)}
                 {copied ? <Check className="size-3 text-success" /> : <Copy className="size-3 text-muted-foreground" />}
               </div>
             </div>
@@ -46,17 +56,13 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
 
           <div className="flex items-center gap-1 text-muted-foreground">
             {headerAction ?? (
-              <>
-                <button className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors">
-                  <Monitor className="size-4" />
-                </button>
-                <button className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors">
-                  <SlidersHorizontal className="size-4" />
-                </button>
-                <button className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors">
-                  <Maximize2 className="size-4" />
-                </button>
-              </>
+              <button 
+                onClick={logout}
+                className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-rose-400"
+                title="Đăng xuất / Xóa ví"
+              >
+                <LogOut className="size-4" />
+              </button>
             )}
           </div>
         </header>
@@ -77,9 +83,8 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
                   className="flex flex-col items-center justify-center px-4 py-2"
                   aria-label={t.label}
                 >
-                  <span className={`size-10 rounded-full flex items-center justify-center transition-colors ${
-                    active ? "bg-primary/15 text-primary" : "text-muted-foreground"
-                  }`}>
+                  <span className={`size-10 rounded-full flex items-center justify-center transition-colors ${active ? "bg-primary/15 text-primary" : "text-muted-foreground"
+                    }`}>
                     <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />
                   </span>
                 </Link>

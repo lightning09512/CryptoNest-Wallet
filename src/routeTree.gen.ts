@@ -14,6 +14,7 @@ import { Route as SendSelectRouteImport } from './routes/send-select'
 import { Route as SendRouteImport } from './routes/send'
 import { Route as ReceiveRouteImport } from './routes/receive'
 import { Route as NftsRouteImport } from './routes/nfts'
+import { Route as NftRouteImport } from './routes/nft'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as BuyRouteImport } from './routes/buy'
 import { Route as ActivityRouteImport } from './routes/activity'
@@ -44,6 +45,11 @@ const NftsRoute = NftsRouteImport.update({
   path: '/nfts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NftRoute = NftRouteImport.update({
+  id: '/nft',
+  path: '/nft',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/activity': typeof ActivityRoute
   '/buy': typeof BuyRoute
   '/explore': typeof ExploreRoute
+  '/nft': typeof NftRoute
   '/nfts': typeof NftsRoute
   '/receive': typeof ReceiveRoute
   '/send': typeof SendRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/activity': typeof ActivityRoute
   '/buy': typeof BuyRoute
   '/explore': typeof ExploreRoute
+  '/nft': typeof NftRoute
   '/nfts': typeof NftsRoute
   '/receive': typeof ReceiveRoute
   '/send': typeof SendRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/activity': typeof ActivityRoute
   '/buy': typeof BuyRoute
   '/explore': typeof ExploreRoute
+  '/nft': typeof NftRoute
   '/nfts': typeof NftsRoute
   '/receive': typeof ReceiveRoute
   '/send': typeof SendRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/buy'
     | '/explore'
+    | '/nft'
     | '/nfts'
     | '/receive'
     | '/send'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/buy'
     | '/explore'
+    | '/nft'
     | '/nfts'
     | '/receive'
     | '/send'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/buy'
     | '/explore'
+    | '/nft'
     | '/nfts'
     | '/receive'
     | '/send'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   ActivityRoute: typeof ActivityRoute
   BuyRoute: typeof BuyRoute
   ExploreRoute: typeof ExploreRoute
+  NftRoute: typeof NftRoute
   NftsRoute: typeof NftsRoute
   ReceiveRoute: typeof ReceiveRoute
   SendRoute: typeof SendRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NftsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/nft': {
+      id: '/nft'
+      path: '/nft'
+      fullPath: '/nft'
+      preLoaderRoute: typeof NftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore': {
       id: '/explore'
       path: '/explore'
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityRoute: ActivityRoute,
   BuyRoute: BuyRoute,
   ExploreRoute: ExploreRoute,
+  NftRoute: NftRoute,
   NftsRoute: NftsRoute,
   ReceiveRoute: ReceiveRoute,
   SendRoute: SendRoute,

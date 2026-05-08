@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ChevronDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { WalletShell } from "@/components/wallet-shell";
-import { TOKENS } from "@/lib/wallet-data";
 import { toast } from "sonner";
+import { useWalletStore } from "@/store/wallet-store";
+import { sendSepoliaETH } from "@/lib/web3";
 
 export const Route = createFileRoute("/swap")({
   head: () => ({ meta: [{ title: "Swap — Phantom Wallet" }] }),
@@ -23,22 +24,55 @@ type Tab = (typeof TABS)[number];
 
 function SwapPage() {
   const nav = useNavigate();
-  const [from, setFrom] = useState(TOKENS[0]);
-  const [to, setTo] = useState(TOKENS.find((t) => t.symbol === "USDC") ?? TOKENS[1]);
+  const { balance, kcoinBalance, privateKey, addKCoin } = useWalletStore();
+  
+  const ethAmount = parseFloat(balance || "0");
+  const LOCAL_TOKENS = [
+    { symbol: "ETH", name: "Ethereum (Sepolia)", balance: ethAmount, priceUsd: 3000, color: "#627EEA" },
+    { symbol: "KCOIN", name: "Khánh Coin", balance: kcoinBalance, priceUsd: 1.0, color: "#E83A65" },
+  ];
+
+  const [from, setFrom] = useState(LOCAL_TOKENS[0]);
+  const [to, setTo] = useState(LOCAL_TOKENS[1]);
   const [amount, setAmount] = useState("");
   const [tab, setTab] = useState<Tab>("Tokens");
+  const [isSwapping, setIsSwapping] = useState(false);
 
   const out = parseFloat(amount || "0") * (from.priceUsd / (to.priceUsd || 1));
 
   const switchTokens = () => {
-    setFrom(to);
-    setTo(from);
+    toast.error("Phiên bản Demo chỉ hỗ trợ Swap 1 chiều: ETH -> KCoin");
   };
 
-  const submit = () => {
-    if (!amount) return toast.error("Nhập số lượng");
-    toast.success(`Đã swap ${amount} ${from.symbol} → ${out.toFixed(4)} ${to.symbol} (demo)`);
-    nav({ to: "/activity" });
+  const submit = async () => {
+    if (!amount || parseFloat(amount) <= 0) return toast.error("Nhập số lượng hợp lệ");
+    if (from.symbol !== "ETH" || to.symbol !== "KCOIN") {
+      return toast.error("Chỉ hỗ trợ swap từ ETH sang KCoin");
+    }
+    if (parseFloat(amount) > ethAmount) {
+      return toast.error("Số dư ETH không đủ");
+    }
+    if (!privateKey) {
+      return toast.error("Lỗi ví: Không tìm thấy Private Key");
+    }
+
+    setIsSwapping(true);
+    const toastId = toast.loading("Đang đẩy giao dịch lên mạng Sepolia...");
+
+    // Gửi ETH vào burn address để giả lập việc Swap mất ETH
+    const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+    const result = await sendSepoliaETH(privateKey, BURN_ADDRESS, amount);
+
+    setIsSwapping(false);
+
+    if (result.success) {
+      addKCoin(out); // Cộng KCoin cục bộ
+      toast.success(`Đã Swap thành công! Nhận được ${out.toFixed(2)} KCoin`, { id: toastId });
+      setAmount("");
+      nav({ to: "/" });
+    } else {
+      toast.error(`Swap thất bại: ${result.error}`, { id: toastId });
+    }
   };
 
   const TokenBox = ({
@@ -49,7 +83,7 @@ function SwapPage() {
     readOnly,
     showActions,
   }: {
-    token: typeof TOKENS[number];
+    token: { symbol: string, color: string, balance: number, priceUsd: number };
     label: string;
     value: string;
     onChange?: (v: string) => void;
@@ -143,9 +177,10 @@ function SwapPage() {
 
         <button
           onClick={submit}
-          className="w-full mt-4 rounded-full bg-primary text-primary-foreground font-semibold py-3.5 hover:opacity-90 transition-opacity"
+          disabled={isSwapping}
+          className={`w-full mt-4 rounded-full bg-primary text-black font-semibold py-3.5 transition-opacity ${isSwapping ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}`}
         >
-          Switch tokens
+          {isSwapping ? "Đang xử lý giao dịch..." : "Hoán đổi (Swap)"}
         </button>
 
         {/* Trending */}

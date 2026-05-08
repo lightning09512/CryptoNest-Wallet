@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Search, TrendingUp, Globe, Layers, BookOpen } from "lucide-react";
-import { useState } from "react";
-import { ALL_TOKENS } from "@/lib/wallet-data";
+import { Search, Circle, Infinity, Layers, Globe } from "lucide-react";
+import { useRef, useState } from "react";
 import { WalletShell } from "@/components/wallet-shell";
 
 export const Route = createFileRoute("/explore")({
@@ -11,290 +10,210 @@ export const Route = createFileRoute("/explore")({
 
 function ExplorePage() {
   const nav = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("tokens");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
-  const tabs = [
-    { id: "tokens", label: "Tokens", icon: TrendingUp },
-    { id: "perps", label: "Perps", icon: TrendingUp },
-    { id: "lists", label: "Lists", icon: Layers },
-    { id: "sites", label: "Sites", icon: Globe },
-    { id: "learn", label: "Learn", icon: BookOpen },
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Tốc độ cuộn khi kéo
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  // Categories data
+  const categories = [
+    { id: "tokens", label: "Tokens", icon: Circle, color: "#2E8B57", bgColor: "#1E3B2D" }, // Greenish
+    { id: "perps", label: "Perps", icon: Infinity, color: "#000", bgColor: "#FFC0CB" },    // Pinkish
+    { id: "lists", label: "Lists", icon: Layers, color: "#000", bgColor: "#B19CD9" },      // Purple
+    { id: "sites", label: "Sites", icon: Globe, color: "#fff", bgColor: "#4169E1" },       // Blue
   ];
 
-  // Mock data cho trending tokens
-  const trendingTokens = [
-    { symbol: "HANTA", name: "Hanta", price: 0.00839372, marketCap: 8400000, change: 111.16, color: "#FFD13F" },
-    { symbol: "HENTAI", name: "Hentai", price: 0.00084941, marketCap: 838000, change: 190.16, color: "#4A87F2" },
-    { symbol: "ALIENS", name: "Aliens", price: 0.0022548, marketCap: 2200000, change: 176.09, color: "#2EC08B" },
-  ];
-
-  // Mock data cho trending perps
-  const trendingPerps = [
-    { symbol: "CRWV", name: "CRWV", price: 112.66, volume: 21000000, change: -14.68, leverage: "10x", color: "#AB9FF2" },
-    { symbol: "SNDK", name: "SNDK", price: 1468.60, volume: 103000000, change: 8.30, leverage: "10x", color: "#4A87F2" },
-    { symbol: "RKLB", name: "RKLB", price: 95.98, volume: 3000000, change: 15.89, leverage: "10x", color: "#2EC08B" },
-  ];
-
-  // Mock data cho top lists
-  const topLists = [
-    { name: "Top Gainers", count: 15, icon: "📈" },
-    { name: "Meme", count: 100, icon: "🐸" },
-    { name: "Tokenized Stocks", count: 80, icon: "📊" },
-  ];
-
-  // Mock data cho trending sites
+  // Mock data for trending sites
   const trendingSites = [
-    { name: "DRiP", category: "Collectibles", icon: "🎨", color: "#AB9FF2" },
-    { name: "Jupiter", category: "DeFi", icon: "🪐", color: "#4A87F2" },
-    { name: "pump.fun", category: "DeFi", icon: "🚀", color: "#2EC08B" },
+    { 
+      name: "Jupiter", 
+      category: "DeFi", 
+      icon: "🪐", 
+      color: "#1a1e23", 
+      badge: "1", 
+      badgeColor: "#F5B041" 
+    },
+    { 
+      name: "pump.fun", 
+      category: "DeFi", 
+      icon: "💊", 
+      color: "#ffffff", 
+      badge: "2", 
+      badgeColor: "#808B96" 
+    },
+    { 
+      name: "Zealy", 
+      category: "Community", 
+      icon: "Z", 
+      color: "#E83A65", 
+      badge: "3", 
+      badgeColor: "#E74C3C" 
+    },
   ];
 
-  // Mock data cho learn
+  // Mock data for learn
   const learnContent = [
-    { title: "Liquid Staking 101", description: "What is liquid staking?", icon: "💧" },
-    { title: "Monad 101", description: "Learn more about Monad", icon: "⚡" },
-    { title: "New ways to Pay", description: "Onboard with Google or Apple pay", icon: "💳" },
+    { 
+      title: "Liquid Staking 101", 
+      description: "What is liquid staking?", 
+      icon: "🌊",
+      color: "#82E0AA"
+    },
+    { 
+      title: "Monad 101", 
+      description: "Learn more about Monad", 
+      icon: "👻",
+      color: "#34224A"
+    },
+    { 
+      title: "New ways to Pay", 
+      description: "Onboard with Google or Apple pay", 
+      icon: "💳",
+      color: "#1c1c1c"
+    },
   ];
 
   return (
     <WalletShell>
-      <div className="p-4">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="size-4" /> Quay lại
-        </Link>
-
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 size-4 text-muted-foreground transform -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm trang web, token"
-            className="w-full pl-10 pr-4 py-3 bg-card border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
+      <div className="min-h-screen min-w-[360px] bg-[#121212] px-4 pb-8 text-white font-sans">
+        
+        {/* Placeholder for header area to match screenshot's top spacing */}
+        <div className="pt-2">
+          <div className="rounded-2xl bg-[#1e1e1e] px-4 py-3 mb-6">
+            <span className="text-sm font-medium text-slate-300">90 tokens</span>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-5 px-1 mb-6 border-b border-border overflow-x-auto">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
+        <div className="space-y-6">
+          {/* Search Bar */}
+          <div className="relative">
+            <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <Search className="size-5" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search for sites, tokens"
+              className="w-full rounded-[16px] border border-white/5 bg-[#1a1a1c] pl-12 pr-4 py-4 text-[15px] text-white placeholder:text-slate-500 outline-none focus:border-white/20 transition-colors"
+            />
+          </div>
+
+          {/* Categories Horizontal Scroll */}
+          <div 
+            ref={scrollRef}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing select-none"
+          >
+            {categories.map((cat) => (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 pb-3 text-sm font-medium transition-colors whitespace-nowrap relative ${
-                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
+                key={cat.id}
+                className="flex items-center gap-3 whitespace-nowrap rounded-[20px] bg-[#1c1c1e] pr-5 pl-1.5 py-1.5 transition hover:bg-white/[0.06] flex-shrink-0"
               >
-                <Icon className="size-4" />
-                <span>{tab.label}</span>
-                {isActive && (
-                  <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-primary rounded-full" />
-                )}
+                <div 
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]"
+                  style={{ backgroundColor: cat.bgColor, color: cat.color }}
+                >
+                  <cat.icon className="size-5" strokeWidth={2.5} />
+                </div>
+                <span className="text-[15px] font-semibold text-white">{cat.label}</span>
               </button>
-            );
-          })}
-        </div>
-
-        {/* Content based on active tab */}
-        {activeTab === "tokens" && (
-          <div className="space-y-6">
-            {/* Trending Tokens */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Token xu hướng</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
-                </button>
-              </div>
-              <div className="space-y-2">
-                {trendingTokens.map((token) => (
-                  <button
-                    key={token.symbol}
-                    onClick={() => nav({ to: "/send-select" })}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
-                  >
-                    <div className="size-12 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0" style={{ backgroundColor: token.color }}>
-                      <div className="w-5 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center">
-                        <span className="text-[10px] font-bold">{token.symbol.slice(0, 2)}</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="font-medium text-sm">{token.symbol}</div>
-                      </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
-                        ${(token.marketCap / 1000000).toFixed(1)}M MC
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold tabular-nums text-sm">
-                        ${token.price.toFixed(8)}
-                      </div>
-                      <div className={`text-xs tabular-nums ${token.change >= 0 ? "text-success" : "text-destructive"}`}>
-                        {token.change >= 0 ? "+" : ""}{token.change.toFixed(2)}%
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
-        )}
 
-        {activeTab === "perps" && (
-          <div className="space-y-6">
-            {/* Trending Perps */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Perps xu hướng</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
-                </button>
-              </div>
-              <div className="space-y-2">
-                {trendingPerps.map((perp) => (
-                  <button
-                    key={perp.symbol}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
-                  >
-                    <div className="size-12 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0" style={{ backgroundColor: perp.color }}>
-                      <div className="w-5 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center">
-                        <span className="text-[10px] font-bold">{perp.symbol.slice(0, 2)}</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="font-medium text-sm">{perp.symbol}</div>
-                        <div className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
-                          {perp.leverage}
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
-                        ${(perp.volume / 1000000).toFixed(1)}M Vol
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold tabular-nums text-sm">
-                        ${perp.price.toFixed(2)}
-                      </div>
-                      <div className={`text-xs tabular-nums ${perp.change >= 0 ? "text-success" : "text-destructive"}`}>
-                        {perp.change >= 0 ? "+" : ""}{perp.change.toFixed(2)}%
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+          {/* Trending Sites Section */}
+          <section>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h2 className="text-[17px] font-semibold text-white">Trending Sites</h2>
+              <button className="text-[14px] font-medium text-[#A688FA] hover:text-[#B698FA] transition">See More</button>
             </div>
-          </div>
-        )}
-
-        {activeTab === "lists" && (
-          <div className="space-y-6">
-            {/* Top Lists */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Danh sách hàng đầu</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
+            
+            <div className="rounded-[24px] bg-[#1c1c1e] p-2">
+              {trendingSites.map((site) => (
+                <button
+                  key={site.name}
+                  className="w-full flex items-center gap-4 rounded-[20px] px-3 py-3 text-left transition hover:bg-white/[0.04]"
+                >
+                  <div className="relative shrink-0">
+                    <div 
+                      className="flex h-14 w-14 items-center justify-center rounded-[18px] text-2xl font-bold shadow-inner"
+                      style={{ backgroundColor: site.color, color: site.name === 'pump.fun' ? '#000' : '#fff' }}
+                    >
+                      {site.icon}
+                    </div>
+                    {/* Badge */}
+                    <div 
+                      className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#1c1c1e] text-[10px] font-bold text-white shadow-sm"
+                      style={{ backgroundColor: site.badgeColor }}
+                    >
+                      {site.badge}
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[16px] font-semibold text-white truncate">{site.name}</div>
+                    <div className="text-[14px] text-slate-400 truncate">{site.category}</div>
+                  </div>
                 </button>
-              </div>
-              <div className="space-y-2">
-                {topLists.map((list) => (
-                  <button
-                    key={list.name}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
-                  >
-                    <div className="size-7 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-sm">
-                      {list.icon}
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="font-medium text-sm">{list.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {list.count} token
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
-          </div>
-        )}
+          </section>
 
-        {activeTab === "sites" && (
-          <div className="space-y-6">
-            {/* Trending Sites */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Trang web xu hướng</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
-                </button>
-              </div>
-              <div className="space-y-2">
-                {trendingSites.map((site) => (
-                  <button
-                    key={site.name}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
-                  >
-                    <div className="size-12 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0" style={{ backgroundColor: site.color }}>
-                      <div className="w-5 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center">
-                        <span className="text-lg">{site.icon}</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="font-medium text-sm">{site.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {site.category}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+          {/* Learn Section */}
+          <section>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h2 className="text-[17px] font-semibold text-white">Learn</h2>
+              <button className="text-[14px] font-medium text-[#A688FA] hover:text-[#B698FA] transition">See More</button>
             </div>
-          </div>
-        )}
-
-        {activeTab === "learn" && (
-          <div className="space-y-6">
-            {/* Learn */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Học hỏi</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
-                </button>
-              </div>
-              <div className="space-y-2">
-                {learnContent.map((item) => (
-                  <button
-                    key={item.title}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
-                  >
-                    <div className="size-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-lg">
+            
+            <div className="rounded-[24px] bg-[#1c1c1e] p-2">
+              {learnContent.map((item) => (
+                <button
+                  key={item.title}
+                  className="w-full flex items-center gap-4 rounded-[20px] px-3 py-3 text-left transition hover:bg-white/[0.04]"
+                >
+                  <div className="relative shrink-0">
+                    <div 
+                      className="flex h-14 w-14 items-center justify-center rounded-[18px] text-2xl"
+                      style={{ backgroundColor: item.color }}
+                    >
                       {item.icon}
                     </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="font-medium text-sm">{item.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {item.description}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[16px] font-semibold text-white truncate">{item.title}</div>
+                    <div className="text-[14px] text-slate-400 truncate">{item.description}</div>
+                  </div>
+                </button>
+              ))}
             </div>
-          </div>
-        )}
-
-        {/* Footer note */}
-        <div className="mt-8 p-4 bg-card/50 rounded-xl text-xs text-muted-foreground leading-relaxed">
-          Tokenized Stocks là các công cụ dựa trên blockchain do bên thứ ba phát hành được thiết kế để theo dõi hiệu suất của cổ phiếu cơ sở. Mặc dù chúng theo dõi các biến động giá và cơ chế của chứng khoán thực tế, chúng không trao quyền sở hữu hoặc quyền lợi của cổ đông. Chúng chỉ có sẵn ở một số khu vực pháp lý nhất định. Danh sách token được tạo bằng dữ liệu thị trường do các nhà cung cấp bên thứ ba khác nhau cung cấp bao gồm CoinGecko, Birdeye, Jupiter và Hyperliquid. Hiệu suất được hiển thị dựa trên khoảng thời gian đã chọn. Hiệu suất trong quá khứ không phải là chỉ báo về hiệu suất trong tương lai.
+          </section>
         </div>
       </div>
     </WalletShell>
   );
 }
+
