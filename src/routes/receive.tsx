@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { WalletShell } from "@/components/wallet-shell";
-import { WALLET_ADDRESS } from "@/lib/wallet-data";
+import { useWalletStore } from "@/store/wallet-store";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/receive")({
@@ -11,16 +11,20 @@ export const Route = createFileRoute("/receive")({
 });
 
 function ReceivePage() {
+  const { address } = useWalletStore();
   const [copied, setCopied] = useState(false);
+  
+  const displayAddress = address || "";
+
   const copy = () => {
-    navigator.clipboard.writeText(WALLET_ADDRESS);
+    navigator.clipboard.writeText(displayAddress);
     setCopied(true);
     toast.success("Đã sao chép");
     setTimeout(() => setCopied(false), 1500);
   };
 
   // simple QR placeholder using external image-free SVG pattern
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${WALLET_ADDRESS}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${displayAddress}`;
 
   return (
     <WalletShell>
@@ -38,7 +42,7 @@ function ReceivePage() {
             <img src={qrUrl} alt="Wallet QR code" width={240} height={240} className="size-60" />
           </div>
           <p className="mt-5 text-xs text-muted-foreground">Địa chỉ ví của bạn</p>
-          <p className="mt-1 font-mono text-sm break-all text-center px-4">{WALLET_ADDRESS}</p>
+          <p className="mt-1 font-mono text-sm break-all text-center px-4">{displayAddress}</p>
           <button
             onClick={copy}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-secondary px-5 py-2.5 font-medium text-sm hover:bg-accent transition-colors"

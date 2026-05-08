@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Copy, Check, Monitor, Maximize2, Search, Home, ArrowLeftRight, Clock, SlidersHorizontal, LogOut } from "lucide-react";
+import { Copy, Check, Monitor, Maximize2, Search, Home, ArrowLeftRight, Clock, SlidersHorizontal, LogOut, Key } from "lucide-react";
 import { useState } from "react";
 import ghostLogo from "@/assets/ghost-logo.png";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { OnboardingView } from "./onboarding-view";
 export function WalletShell({ children, headerAction }: { children: React.ReactNode; headerAction?: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
   const location = useLocation();
-  const { address, logout } = useWalletStore();
+  const { address, mnemonic, privateKey, logout } = useWalletStore();
 
   if (!address) {
     return <OnboardingView />;
@@ -26,6 +26,24 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
     setTimeout(() => setCopied(false), 1500);
   };
 
+  const showSecret = () => {
+    const secret = mnemonic || privateKey;
+    const isMnemonic = !!mnemonic;
+    
+    toast(
+      <div className="flex flex-col gap-2 p-1">
+        <strong className="text-destructive font-bold">
+          {isMnemonic ? "Seed Phrase (Cụm từ khôi phục)" : "Private Key"}
+        </strong>
+        <p className="font-mono text-xs break-all bg-secondary p-2 rounded-md border border-destructive/20 select-all">
+          {secret}
+        </p>
+        <p className="text-[10px] text-muted-foreground mt-1">Tuyệt đối không chia sẻ mã này cho bất kỳ ai!</p>
+      </div>,
+      { duration: 15000 }
+    );
+  };
+
   const tabs = [
     { to: "/", label: "Trang chủ", icon: Home },
     { to: "/swap", label: "Swap", icon: ArrowLeftRight },
@@ -35,9 +53,9 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-md min-h-screen bg-background flex flex-col">
+      <div className="mx-auto max-w-md min-h-screen bg-background flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.5)]">
         {/* Header */}
-        <header className="flex items-center justify-between px-4 py-3">
+        <header className="flex items-center justify-between px-4 py-3 sticky top-0 z-50 bg-background/80 backdrop-blur-md">
           <button
             onClick={copy}
             className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-left"
@@ -56,13 +74,22 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
 
           <div className="flex items-center gap-1 text-muted-foreground">
             {headerAction ?? (
-              <button 
-                onClick={logout}
-                className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-rose-400"
-                title="Đăng xuất / Xóa ví"
-              >
-                <LogOut className="size-4" />
-              </button>
+              <>
+                <button 
+                  onClick={showSecret}
+                  className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-amber-400"
+                  title="Xem Seed Phrase / Private Key"
+                >
+                  <Key className="size-4" />
+                </button>
+                <button 
+                  onClick={logout}
+                  className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-rose-400"
+                  title="Đăng xuất / Xóa ví"
+                >
+                  <LogOut className="size-4" />
+                </button>
+              </>
             )}
           </div>
         </header>

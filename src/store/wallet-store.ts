@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 interface WalletState {
   address: string | null;
   privateKey: string | null;
+  mnemonic: string | null;
   balance: string;
   kcoinBalance: number;
   createWallet: () => void;
@@ -19,6 +20,7 @@ export const useWalletStore = create<WalletState>()(
     (set) => ({
       address: null,
       privateKey: null,
+      mnemonic: null,
       balance: '0.00',
       kcoinBalance: 0,
       
@@ -27,6 +29,7 @@ export const useWalletStore = create<WalletState>()(
         set({
           address: wallet.address,
           privateKey: wallet.privateKey,
+          mnemonic: wallet.mnemonic?.phrase || null,
           balance: '0.00',
           kcoinBalance: 0,
         });
@@ -40,6 +43,7 @@ export const useWalletStore = create<WalletState>()(
           set({
             address: wallet.address,
             privateKey: wallet.privateKey,
+            mnemonic: null,
             balance: '0.00',
             kcoinBalance: 0,
           });
@@ -51,7 +55,7 @@ export const useWalletStore = create<WalletState>()(
       },
 
       logout: () => {
-        set({ address: null, privateKey: null, balance: '0.00', kcoinBalance: 0 });
+        set({ address: null, privateKey: null, mnemonic: null, balance: '0.00', kcoinBalance: 0 });
       },
 
       setBalance: (balance: string) => {
