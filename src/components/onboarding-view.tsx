@@ -16,7 +16,7 @@ export function OnboardingView() {
   // Create flow states
   const [pin, setPin] = useState("");
   const [username, setUsername] = useState(`@User${Math.floor(Math.random() * 10000)}`);
-  const [tempWallet, setTempWallet] = useState<ethers.Wallet | null>(null);
+  const [tempWallet, setTempWallet] = useState<ethers.HDNodeWallet | null>(null);
   const [tempPhrase, setTempPhrase] = useState("");
   const pinInputRef = useRef<HTMLInputElement>(null);
 
@@ -133,7 +133,7 @@ export function OnboardingView() {
             <div key={index} className="relative flex items-center">
               <span className="absolute left-3 text-muted-foreground text-sm">{index + 1}.</span>
               <input
-                ref={(el) => (inputRefs.current[index] = el)}
+                ref={(el) => { inputRefs.current[index] = el; }}
                 type="text"
                 value={word}
                 onChange={(e) => handleWordChange(index, e.target.value)}
@@ -254,7 +254,7 @@ export function OnboardingView() {
           Write down these words in the exact order and keep them safe. Never share them with anyone.
         </p>
         <div className="grid grid-cols-3 gap-3 w-full mb-auto">
-          {tempWallet?.mnemonic?.phrase.split(" ").map((word, index) => (
+          {tempWallet?.mnemonic?.phrase.split(" ").map((word: string, index: number) => (
             <div key={index} className="flex items-center bg-[#1c1c1e] border border-white/5 rounded-lg py-3 px-3">
               <span className="text-muted-foreground text-xs mr-2">{index + 1}.</span>
               <span className="text-sm text-white font-medium">{word}</span>

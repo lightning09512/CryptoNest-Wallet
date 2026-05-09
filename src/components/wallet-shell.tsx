@@ -107,7 +107,7 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
         </header>
 
         {/* Content */}
-        <div className="flex-1">{children}</div>
+        <div className="flex-1 overflow-y-auto scrollbar-hide">{children}</div>
 
         {/* Bottom tabs */}
         <nav className="border-t border-border bg-background sticky bottom-0">

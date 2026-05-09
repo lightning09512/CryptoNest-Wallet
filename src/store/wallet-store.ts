@@ -18,6 +18,7 @@ interface WalletState {
   logout: () => void;
   setBalance: (balance: string) => void;
   addKCoin: (amount: number) => void;
+  subtractKCoin: (amount: number) => void;
   unlockWallet: (pin: string) => boolean;
   lockWallet: () => void;
   addTx: (tx: Tx) => void;
@@ -70,7 +71,7 @@ export const useWalletStore = create<WalletState>()(
           set({
             address: wallet.address,
             privateKey: wallet.privateKey,
-            mnemonic: wallet.mnemonic?.phrase || null,
+            mnemonic: (wallet as ethers.HDNodeWallet).mnemonic?.phrase || null,
             balance: '0.00',
             kcoinBalance: 0,
             pin,
@@ -95,6 +96,10 @@ export const useWalletStore = create<WalletState>()(
 
       addKCoin: (amount: number) => {
         set((state) => ({ kcoinBalance: state.kcoinBalance + amount }));
+      },
+
+      subtractKCoin: (amount: number) => {
+        set((state) => ({ kcoinBalance: Math.max(0, state.kcoinBalance - amount) }));
       },
 
       unlockWallet: (inputPin: string) => {
