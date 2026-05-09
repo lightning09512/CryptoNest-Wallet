@@ -116,7 +116,7 @@ function NFTPage() {
     <WalletShell>
       <div className="p-4">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="size-4" /> Quay lại
+          <ArrowLeft className="size-4" /> Back
         </Link>
 
         {/* Search Bar */}
@@ -126,7 +126,7 @@ function NFTPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm bộ sưu tập, NFT"
+            placeholder="Search collections, NFTs"
             className="w-full pl-10 pr-4 py-3 bg-card border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
@@ -160,9 +160,9 @@ function NFTPage() {
             {/* Trending Collections */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Bộ sưu tập xu hướng</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
+                <h2 className="text-lg font-semibold">Trending Collections</h2>
+                <button className="text-sm font-medium text-primary hover:opacity-80 transition-opacity">
+                  See more
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-3">
@@ -203,7 +203,7 @@ function NFTPage() {
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold">Top Collections</h2>
                 <button className="text-sm text-primary hover:underline">
-                  Xem thêm
+                  See more
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-3">
@@ -244,9 +244,9 @@ function NFTPage() {
             {/* Trending Now */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Xu hướng ngay bây giờ</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
+                <h2 className="text-lg font-semibold">Trending Now</h2>
+                <button className="text-sm font-medium text-primary hover:opacity-80 transition-opacity">
+                  See more
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-3">
@@ -287,9 +287,9 @@ function NFTPage() {
             {/* Categories */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Danh mục</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
+                <h2 className="text-lg font-semibold">Categories</h2>
+                <button className="text-sm font-medium text-primary hover:opacity-80 transition-opacity">
+                  See more
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -317,9 +317,9 @@ function NFTPage() {
             {/* Marketplace */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Sàn giao dịch</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
+                <h2 className="text-lg font-semibold">Marketplaces</h2>
+                <button className="text-sm font-medium text-primary hover:opacity-80 transition-opacity">
+                  See more
                 </button>
               </div>
               <div className="space-y-2">
@@ -349,9 +349,9 @@ function NFTPage() {
             {/* Learn */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Học hỏi</h2>
-                <button className="text-sm text-primary hover:underline">
-                  Xem thêm
+                <h2 className="text-lg font-semibold">Learn</h2>
+                <button className="text-sm font-medium text-primary hover:opacity-80 transition-opacity">
+                  See more
                 </button>
               </div>
               <div className="space-y-2">
@@ -378,7 +378,7 @@ function NFTPage() {
 
         {/* Footer note */}
         <div className="mt-8 p-4 bg-card/50 rounded-xl text-xs text-muted-foreground leading-relaxed">
-          NFT (Non-Fungible Tokens) là các tài sản kỹ thuật số độc nhất trên blockchain. Mỗi NFT có định danh riêng và không thể thay thế. Giá trị NFT có thể biến động và không được đảm bảo. Hãy nghiên cứu kỹ trước khi mua hoặc bán NFT.
+          NFTs (Non-Fungible Tokens) are unique digital assets on the blockchain. Each NFT has a unique identifier and is non-interchangeable. NFT value can be volatile and is not guaranteed. Please do your own research before buying or selling NFTs.
         </div>
       </div>
     </WalletShell>

@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { WalletShell } from "@/components/wallet-shell";
 
 export const Route = createFileRoute("/explore")({
-  head: () => ({ meta: [{ title: "Khám phá — Fox Wallet" }] }),
+  head: () => ({ meta: [{ title: "Explore — Fox Wallet" }] }),
   component: ExplorePage,
 });
 

@@ -11,11 +11,13 @@ export function OnboardingView() {
   const { importWallet } = useWalletStore();
   const [step, setStep] = useState<Step>("start");
   const [showHelp, setShowHelp] = useState(false);
+  const [flowType, setFlowType] = useState<"create" | "import">("create");
   
   // Create flow states
   const [pin, setPin] = useState("");
   const [username, setUsername] = useState(`@User${Math.floor(Math.random() * 10000)}`);
   const [tempWallet, setTempWallet] = useState<ethers.Wallet | null>(null);
+  const [tempPhrase, setTempPhrase] = useState("");
   const pinInputRef = useRef<HTMLInputElement>(null);
 
   // Import flow states
@@ -32,23 +34,28 @@ export function OnboardingView() {
   const handleImport = () => {
     const phrase = words.join(" ").trim();
     if (words.some(w => !w.trim())) {
-      toast.error("Vui lòng điền đủ 12 từ khôi phục");
+      toast.error("Please enter all 12 recovery words");
       return;
     }
-    // We need a PIN and username for imported wallets too, but to keep it simple, we can generate defaults or just use the same wizard. 
-    // Wait, the prompt only requested PIN for "tạo ví mới". For import, let's just use a default pin '0000' and random username for now to not break the flow.
-    const success = importWallet(phrase, "0000", `@Imported${Math.floor(Math.random() * 1000)}`);
-    if (success) {
-      toast.success("Nhập ví thành công! Mật khẩu mặc định là 0000.");
-    } else {
-      toast.error("Cụm từ khôi phục không hợp lệ");
+    try {
+      let wallet;
+      if (phrase.includes(' ')) {
+        wallet = ethers.Wallet.fromPhrase(phrase);
+      } else {
+        const formattedPk = phrase.startsWith('0x') ? phrase : `0x${phrase}`;
+        wallet = new ethers.Wallet(formattedPk);
+      }
+      setTempPhrase(phrase);
+      setStep("create-pin"); // Proceed to protect wallet
+    } catch (e) {
+      toast.error("Invalid recovery phrase or private key");
     }
   };
 
   const finalizeCreation = () => {
     if (tempWallet?.mnemonic) {
       importWallet(tempWallet.mnemonic.phrase, pin, username);
-      toast.success("Ví đã sẵn sàng!");
+      toast.success("Wallet is ready!");
     }
   };
 
@@ -106,19 +113,19 @@ export function OnboardingView() {
               <HelpCircle className="size-6" />
             </button>
             <div className="absolute right-0 top-full mt-2 w-64 bg-[#252528] border border-white/10 rounded-xl p-4 shadow-2xl z-50 text-left opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-              <h3 className="font-semibold text-sm mb-2 text-white">Hướng dẫn nhập ví</h3>
+              <h3 className="font-semibold text-sm mb-2 text-white">Import Guide</h3>
               <ul className="text-xs text-slate-300 space-y-2 list-disc pl-4">
-                <li>Cụm từ khôi phục gồm 12 từ tiếng Anh ngăn cách bằng dấu cách.</li>
-                <li>Bạn có thể copy và <strong>Paste (Dán)</strong> cả cụm 12 từ vào ô số 1 để điền nhanh.</li>
-                <li>Nếu bạn chỉ có Private Key, hãy dán toàn bộ chuỗi 64 ký tự vào ô số 1.</li>
+                <li>The recovery phrase consists of 12 English words separated by spaces.</li>
+                <li>You can copy and <strong>Paste</strong> all 12 words into the first box to fill them quickly.</li>
+                <li>If you only have a Private Key, paste the entire 64-character string into the first box.</li>
               </ul>
             </div>
           </div>
         </header>
 
-        <h1 className="text-3xl font-bold mb-4 text-center">Cụm từ khôi phục</h1>
+        <h1 className="text-3xl font-bold mb-4 text-center">Secret Recovery Phrase</h1>
         <p className="text-muted-foreground text-center mb-8 px-4 text-base">
-          Nhập một ví hiện tại với cụm từ khôi phục gồm 12 ký tự của bạn.
+          Import an existing wallet with your 12-word secret recovery phrase.
         </p>
 
         <div className="grid grid-cols-3 gap-3 w-full mb-8">
@@ -147,7 +154,7 @@ export function OnboardingView() {
             allFilled ? "bg-primary text-black hover:bg-primary/90" : "bg-[#1c1c1e] text-muted-foreground cursor-not-allowed"
           }`}
         >
-          Nhập Ví
+          Continue
         </button>
       </div>
     );
@@ -157,15 +164,15 @@ export function OnboardingView() {
     return (
       <div className="min-h-screen bg-[#111111] flex flex-col items-center p-6 text-white font-sans w-full max-w-md mx-auto">
         <header className="w-full mb-8">
-          <button onClick={() => setStep("start")} className="text-muted-foreground hover:text-white transition-colors">
+          <button onClick={() => setStep(flowType === "import" ? "import" : "start")} className="text-muted-foreground hover:text-white transition-colors">
             <ArrowLeft className="size-6" />
           </button>
         </header>
-        <h1 className="text-2xl font-bold mb-2">Tạo PIN</h1>
+        <h1 className="text-2xl font-bold mb-2">Create PIN</h1>
         <p className="text-muted-foreground text-center mb-1 text-sm px-4">
-          Mã này được sử dụng để bảo mật cho ví của bạn trên tất cả các thiết bị của bạn.
+          This passcode is used to secure your wallet across all your devices.
         </p>
-        <p className="text-amber-400 text-sm font-medium mb-12 text-center">Mã này không thể được phục hồi.</p>
+        <p className="text-amber-400 text-sm font-medium mb-12 text-center">This passcode cannot be recovered.</p>
 
         <input
           ref={pinInputRef}
@@ -194,7 +201,7 @@ export function OnboardingView() {
             pin.length === 4 ? "bg-[#9a91f3] text-black hover:opacity-90" : "bg-[#1c1c1e] text-muted-foreground cursor-not-allowed"
           }`}
         >
-          Tiếp tục
+          Continue
         </button>
       </div>
     );
@@ -208,9 +215,9 @@ export function OnboardingView() {
             <ArrowLeft className="size-6" />
           </button>
         </header>
-        <h1 className="text-2xl font-bold mb-4">Tạo tên tài khoản</h1>
+        <h1 className="text-2xl font-bold mb-4">Create Username</h1>
         <p className="text-muted-foreground text-center mb-8 text-sm px-4">
-          Hệ thống đã tạo ngẫu nhiên một tên cho bạn. Bạn có thể sửa nó nếu muốn.
+          We generated a random username for you. You can change it if you want.
         </p>
         <input
           type="text"
@@ -221,14 +228,19 @@ export function OnboardingView() {
         />
         <button 
           onClick={() => {
-            const w = ethers.Wallet.createRandom();
-            setTempWallet(w);
-            setStep("create-seed");
+            if (flowType === "create") {
+              const w = ethers.Wallet.createRandom();
+              setTempWallet(w);
+              setStep("create-seed");
+            } else {
+              const success = importWallet(tempPhrase, pin, username);
+              if (success) toast.success("Wallet imported successfully!");
+            }
           }}
           disabled={!username.trim()}
           className={`w-full font-bold py-4 rounded-full mt-8 transition-colors bg-[#9a91f3] text-black hover:opacity-90`}
         >
-          Tiếp tục
+          Continue
         </button>
       </div>
     );
@@ -237,9 +249,9 @@ export function OnboardingView() {
   if (step === "create-seed") {
     return (
       <div className="min-h-screen bg-[#111111] flex flex-col items-center p-6 text-white font-sans w-full max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-4 mt-8">Cụm từ khôi phục của bạn</h1>
+        <h1 className="text-2xl font-bold mb-4 mt-8">Your Secret Recovery Phrase</h1>
         <p className="text-muted-foreground text-center mb-8 text-sm px-4">
-          Hãy viết các từ này ra giấy theo đúng thứ tự và cất giữ cẩn thận. Không bao giờ chia sẻ cho người khác.
+          Write down these words in the exact order and keep them safe. Never share them with anyone.
         </p>
         <div className="grid grid-cols-3 gap-3 w-full mb-auto">
           {tempWallet?.mnemonic?.phrase.split(" ").map((word, index) => (
@@ -253,7 +265,7 @@ export function OnboardingView() {
           onClick={() => setStep("create-success")}
           className="w-full bg-[#9a91f3] text-black font-bold py-4 rounded-full mt-8 hover:opacity-90 transition-opacity"
         >
-          Tôi đã lưu lại
+          I Saved It
         </button>
       </div>
     );
@@ -275,16 +287,16 @@ export function OnboardingView() {
           <img src={ghostLogo} alt="Logo" className="size-24" />
         </div>
 
-        <h2 className="text-2xl font-bold mb-3">Bạn đã sẵn sàng!</h2>
+        <h2 className="text-2xl font-bold mb-3">You're all set!</h2>
         <p className="text-muted-foreground text-center mb-auto">
-          Giờ đây bạn có thể tận hưởng tất cả chức năng của ví mình.
+          You can now enjoy all the features of your wallet.
         </p>
 
         <button 
           onClick={finalizeCreation}
           className="w-full bg-[#9a91f3] text-black font-bold py-4 rounded-full mt-8 hover:opacity-90 transition-opacity relative z-10"
         >
-          Bắt đầu
+          Get Started
         </button>
       </div>
     );
@@ -298,21 +310,27 @@ export function OnboardingView() {
       
       <h1 className="text-3xl font-bold mb-3 text-center">CryptoNest</h1>
       <p className="text-muted-foreground text-center mb-10 leading-relaxed">
-        Ví Web3 thử nghiệm của bạn. Kết nối với mạng Ethereum Sepolia để bắt đầu giao dịch.
+        Your experimental Web3 wallet. Connect to the Ethereum Sepolia network to start trading.
       </p>
 
       <div className="w-full space-y-4">
         <button 
-          onClick={() => setStep("create-pin")}
+          onClick={() => {
+            setFlowType("create");
+            setStep("create-pin");
+          }}
           className="w-full bg-primary text-black font-semibold py-4 rounded-full text-[15px] hover:opacity-90 transition-opacity"
         >
-          Tạo Ví Mới
+          Create a new wallet
         </button>
         <button 
-          onClick={() => setStep("import")}
+          onClick={() => {
+            setFlowType("import");
+            setStep("import");
+          }}
           className="w-full bg-[#1c1c1e] text-white font-semibold py-4 rounded-full text-[15px] hover:bg-white/[0.06] transition-colors"
         >
-          Tôi đã có ví rồi
+          I already have a wallet
         </button>
       </div>
     </div>

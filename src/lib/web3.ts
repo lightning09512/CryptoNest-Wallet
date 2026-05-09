@@ -19,7 +19,7 @@ export const fetchWalletBalance = async (address: string): Promise<string> => {
     // Rút gọn lấy 4 chữ số thập phân
     return parseFloat(balanceEth).toFixed(4);
   } catch (error) {
-    console.error("Lỗi khi lấy số dư:", error);
+    console.error("Error fetching balance:", error);
     return "0.0000";
   }
 };
@@ -55,10 +55,10 @@ export const sendSepoliaETH = async (
       response: transactionResponse
     };
   } catch (error: any) {
-    console.error("Lỗi khi gửi giao dịch:", error);
+    console.error("Error sending transaction:", error);
     return {
       success: false,
-      error: error.message || "Đã xảy ra lỗi không xác định"
+      error: error.message || "An unknown error occurred"
     };
   }
 };

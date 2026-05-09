@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 
 export const Route = createFileRoute("/activity")({
-  head: () => ({ meta: [{ title: "Hoạt động — CryptoNest" }] }),
+  head: () => ({ meta: [{ title: "Activity — CryptoNest" }] }),
   component: ActivityPage,
 });
 
@@ -21,7 +21,7 @@ const iconFor = (type: Tx["type"]) => {
 };
 
 const labelFor = (type: Tx["type"]) => ({
-  send: "Đã gửi", receive: "Đã nhận", swap: "Hoán đổi", contract: "Hợp đồng",
+  send: "Sent", receive: "Received", swap: "Swapped", contract: "Contract",
 }[type]);
 
 function ActivityPage() {
@@ -36,21 +36,39 @@ function ActivityPage() {
     
     const fetchTxs = async () => {
       try {
-        const res = await fetch(`https://api-sepolia.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=50&sort=desc`);
-        const data = await res.json();
+        const [normalRes, internalRes] = await Promise.all([
+          fetch(`https://api.etherscan.io/v2/api?chainid=11155111&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=50&sort=desc&apikey=5Z1UAC29DUWV415YFVCA1N4R6UIUP1ASJQ`),
+          fetch(`https://api.etherscan.io/v2/api?chainid=11155111&module=account&action=txlistinternal&address=${address}&startblock=0&endblock=99999999&page=1&offset=50&sort=desc&apikey=5Z1UAC29DUWV415YFVCA1N4R6UIUP1ASJQ`)
+        ]);
         
-        if (data.status === "1" && isMounted) {
-          const etherscanTxs: Tx[] = data.result.map((tx: any) => ({
-            id: tx.hash,
-            type: tx.from.toLowerCase() === address.toLowerCase() ? "send" : "receive",
-            token: "ETH",
-            amount: parseFloat(ethers.formatEther(tx.value)),
-            to: tx.to,
-            from: tx.from,
-            date: new Date(parseInt(tx.timeStamp) * 1000).toISOString(),
-            status: tx.isError === "0" ? "confirmed" : "failed",
-            hash: tx.hash,
-          }));
+        const normalData = await normalRes.json();
+        const internalData = await internalRes.json();
+        
+        if (normalData.status === "0" && normalData.message !== "No transactions found") {
+          console.warn("Etherscan API Error:", normalData.result);
+        }
+
+        let etherscanTxs: Tx[] = [];
+        
+        const processData = (data: any, isInternal: boolean) => {
+          if (data.status === "1" && data.result) {
+            return data.result.map((tx: any) => ({
+              id: tx.hash + (isInternal ? "-int" : ""),
+              type: tx.from.toLowerCase() === address.toLowerCase() ? "send" : "receive",
+              token: "ETH",
+              amount: parseFloat(ethers.formatEther(tx.value)),
+              to: tx.to,
+              from: tx.from,
+              date: new Date(parseInt(tx.timeStamp) * 1000).toISOString(),
+              status: tx.isError === "0" ? "confirmed" : "failed",
+              hash: tx.hash,
+            }));
+          }
+          return [];
+        };
+
+        if (isMounted) {
+          etherscanTxs = [...processData(normalData, false), ...processData(internalData, true)];
 
           // Merge localTxs and etherscanTxs, deduplicate by hash
           const combined = [...localTxs, ...etherscanTxs];
@@ -60,8 +78,6 @@ function ActivityPage() {
           uniqueTxs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
           
           setAllTxs(uniqueTxs);
-        } else if (data.message === "No transactions found" && isMounted) {
-          setAllTxs(localTxs); // If no etherscan txs, just show local
         }
       } catch (e) {
         console.error("Failed to fetch txs", e);
@@ -77,7 +93,7 @@ function ActivityPage() {
   }, [address, localTxs]);
 
   const groups = allTxs.reduce((acc, tx) => {
-    const day = new Date(tx.date).toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" });
+    const day = new Date(tx.date).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" });
     (acc[day] ||= []).push(tx);
     return acc;
   }, {} as Record<string, Tx[]>);
@@ -85,20 +101,20 @@ function ActivityPage() {
   return (
     <WalletShell>
       <div className="p-4 min-h-[calc(100vh-140px)]">
-        <h1 className="text-2xl font-bold mb-4">Hoạt động</h1>
+        <h1 className="text-2xl font-bold mb-4">Activity</h1>
         
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Loader2 className="size-8 animate-spin mb-4 text-primary" />
-            <p>Đang tải dữ liệu mạng lưới...</p>
+            <p>Loading network data...</p>
           </div>
         ) : allTxs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground text-center">
             <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
               <Clock className="size-8 opacity-50" />
             </div>
-            <p className="font-medium">Chưa có giao dịch nào</p>
-            <p className="text-sm opacity-80 mt-1">Các giao dịch của bạn sẽ xuất hiện ở đây.</p>
+            <p className="font-medium">No transactions yet</p>
+            <p className="text-sm opacity-80 mt-1">Your transactions will appear here.</p>
           </div>
         ) : (
           <div className="space-y-5">
@@ -133,7 +149,7 @@ function ActivityPage() {
                               {tx.hash.slice(0, 10)}...
                             </a>
                             <span className={tx.status === "pending" ? "text-primary" : tx.status === "failed" ? "text-destructive" : ""}>
-                              {tx.status === "confirmed" ? "Đã xác nhận" : tx.status === "pending" ? "Đang chờ" : "Thất bại"}
+                              {tx.status === "confirmed" ? "Confirmed" : tx.status === "pending" ? "Pending" : "Failed"}
                             </span>
                           </div>
                         </div>

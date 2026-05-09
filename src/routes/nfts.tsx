@@ -18,7 +18,7 @@ function NftsPage() {
   return (
     <WalletShell>
       <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Bộ sưu tập NFT</h1>
+        <h1 className="text-2xl font-bold mb-4">NFT Collection</h1>
         <div className="grid grid-cols-2 gap-3">
           {NFTS.map((n) => (
             <div key={n.name} className="rounded-2xl border bg-card overflow-hidden hover:shadow-[var(--shadow-soft)] transition-shadow cursor-pointer">

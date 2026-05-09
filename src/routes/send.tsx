@@ -8,7 +8,7 @@ import { useWalletStore } from "@/store/wallet-store";
 import { sendSepoliaETH } from "@/lib/web3";
 
 export const Route = createFileRoute("/send")({
-  head: () => ({ meta: [{ title: "Gửi crypto — Fox Wallet" }] }),
+  head: () => ({ meta: [{ title: "Send Crypto — Fox Wallet" }] }),
   component: SendPage,
   validateSearch: (search: Record<string, string>) => {
     return {
@@ -30,15 +30,15 @@ function SendPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!to || !amount) return toast.error("Vui lòng nhập đủ thông tin");
-    if (!privateKey) return toast.error("Lỗi ví: Không tìm thấy Private Key");
+    if (!to || !amount) return toast.error("Please fill in all fields");
+    if (!privateKey) return toast.error("Wallet error: Private Key not found");
     
     if (parseFloat(amount) > parseFloat(balance)) {
-      return toast.error("Số dư Sepolia ETH không đủ");
+      return toast.error("Insufficient Sepolia ETH balance");
     }
 
     setIsSending(true);
-    const toastId = toast.loading("Đang đẩy giao dịch lên mạng Sepolia...");
+    const toastId = toast.loading("Pushing transaction to Sepolia network...");
 
     const result = await sendSepoliaETH(privateKey, to, amount);
 
@@ -52,7 +52,7 @@ function SendPage() {
         token: "ETH",
         amount: parseFloat(amount),
         to: to,
-        from: "Ví của bạn",
+        from: "Your Wallet",
         date: new Date().toISOString(),
         status: "confirmed",
         hash: result.hash || `0x${Math.random().toString(16).slice(2, 10)}...`,
@@ -60,14 +60,14 @@ function SendPage() {
 
       toast.success(
         <div className="flex flex-col gap-1">
-          <span>Giao dịch thành công!</span>
+          <span>Transaction successful!</span>
           <a 
             href={`https://sepolia.etherscan.io/tx/${result.hash}`} 
             target="_blank" 
             rel="noreferrer"
             className="text-primary text-xs flex items-center gap-1 underline"
           >
-            Xem trên Etherscan <ExternalLink className="size-3" />
+            View on Etherscan <ExternalLink className="size-3" />
           </a>
         </div>, 
         { id: toastId, duration: 8000 }
@@ -76,7 +76,7 @@ function SendPage() {
       setAmount("");
       nav({ to: "/activity" });
     } else {
-      toast.error(`Gửi thất bại: ${result.error}`, { id: toastId });
+      toast.error(`Send failed: ${result.error}`, { id: toastId });
     }
   };
 
@@ -86,13 +86,13 @@ function SendPage() {
     <WalletShell>
       <div className="p-4">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="size-4" /> Quay lại
+          <ArrowLeft className="size-4" /> Back
         </Link>
-        <h1 className="text-2xl font-bold mb-6">Gửi token</h1>
+        <h1 className="text-2xl font-bold mb-6">Send Token</h1>
 
         <form onSubmit={submit} className="space-y-5">
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">Tài sản</label>
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">Asset</label>
             <div className="w-full rounded-xl border bg-card p-3 font-medium flex justify-between items-center opacity-80 cursor-not-allowed">
               <span>{token.name}</span>
               <span className="text-muted-foreground">{token.balance} ETH</span>
@@ -100,7 +100,7 @@ function SendPage() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">Địa chỉ người nhận (Sepolia)</label>
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">Recipient Address (Sepolia)</label>
             <input
               value={to}
               onChange={(e) => setTo(e.target.value)}
@@ -110,7 +110,7 @@ function SendPage() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">Số lượng</label>
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">Amount</label>
             <div className="rounded-xl border bg-card p-4">
               <div className="flex items-baseline gap-2">
                 <input
@@ -137,7 +137,7 @@ function SendPage() {
             disabled={isSending}
             className={`w-full rounded-full bg-gradient-to-r from-primary to-primary-glow text-black font-semibold py-3.5 shadow-[var(--shadow-soft)] transition-opacity ${isSending ? "opacity-50 cursor-not-allowed" : "hover:opacity-95"}`}
           >
-            {isSending ? "Đang xử lý..." : "Xác nhận gửi"}
+            {isSending ? "Processing..." : "Confirm Send"}
           </button>
         </form>
       </div>

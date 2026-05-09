@@ -24,12 +24,12 @@ type Tab = (typeof TABS)[number];
 
 function SwapPage() {
   const nav = useNavigate();
-  const { balance, kcoinBalance, privateKey, addKCoin, addTx } = useWalletStore();
+  const { balance, kcoinBalance, privateKey, addKCoin, addTx, prices } = useWalletStore();
   
   const ethAmount = parseFloat(balance || "0");
   const LOCAL_TOKENS = [
-    { symbol: "ETH", name: "Ethereum (Sepolia)", balance: ethAmount, priceUsd: 3000, color: "#627EEA" },
-    { symbol: "KCOIN", name: "Khánh Coin", balance: kcoinBalance, priceUsd: 1.0, color: "#E83A65" },
+    { symbol: "ETH", name: "Ethereum (Sepolia)", balance: ethAmount, priceUsd: prices["ETH"]?.priceUsd || 3000, color: "#627EEA" },
+    { symbol: "KCOIN", name: "Khánh Coin", balance: kcoinBalance, priceUsd: 36.41, color: "#E83A65" },
   ];
 
   const [from, setFrom] = useState(LOCAL_TOKENS[0]);
@@ -38,26 +38,27 @@ function SwapPage() {
   const [tab, setTab] = useState<Tab>("Tokens");
   const [isSwapping, setIsSwapping] = useState(false);
 
-  const out = parseFloat(amount || "0") * (from.priceUsd / (to.priceUsd || 1));
+  const fromPrice = from.symbol === "ETH" ? (prices["ETH"]?.priceUsd || 3000) : from.priceUsd;
+  const out = parseFloat(amount || "0") * (fromPrice / (to.priceUsd || 1));
 
   const switchTokens = () => {
-    toast.error("Phiên bản Demo chỉ hỗ trợ Swap 1 chiều: ETH -> KCoin");
+    toast.error("Demo version only supports 1-way swap: ETH -> KCoin");
   };
 
   const submit = async () => {
-    if (!amount || parseFloat(amount) <= 0) return toast.error("Nhập số lượng hợp lệ");
+    if (!amount || parseFloat(amount) <= 0) return toast.error("Enter a valid amount");
     if (from.symbol !== "ETH" || to.symbol !== "KCOIN") {
-      return toast.error("Chỉ hỗ trợ swap từ ETH sang KCoin");
+      return toast.error("Only ETH to KCoin swap is supported");
     }
     if (parseFloat(amount) > ethAmount) {
-      return toast.error("Số dư ETH không đủ");
+      return toast.error("Insufficient ETH balance");
     }
     if (!privateKey) {
-      return toast.error("Lỗi ví: Không tìm thấy Private Key");
+      return toast.error("Wallet error: Private Key not found");
     }
 
     setIsSwapping(true);
-    const toastId = toast.loading("Đang đẩy giao dịch lên mạng Sepolia...");
+    const toastId = toast.loading("Pushing transaction to Sepolia network...");
 
     // Gửi ETH vào burn address để giả lập việc Swap mất ETH
     const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
@@ -81,11 +82,11 @@ function SwapPage() {
         hash: result.hash || `0x${Math.random().toString(16).slice(2, 10)}...`,
       });
 
-      toast.success(`Đã Swap thành công! Nhận được ${out.toFixed(2)} KCoin`, { id: toastId });
+      toast.success(`Swap successful! Received ${out.toFixed(2)} KCoin`, { id: toastId });
       setAmount("");
       nav({ to: "/" });
     } else {
-      toast.error(`Swap thất bại: ${result.error}`, { id: toastId });
+      toast.error(`Swap failed: ${result.error}`, { id: toastId });
     }
   };
 
@@ -103,7 +104,9 @@ function SwapPage() {
     onChange?: (v: string) => void;
     readOnly?: boolean;
     showActions?: boolean;
-  }) => (
+  }) => {
+    const livePrice = token.symbol === "ETH" ? (prices["ETH"]?.priceUsd || 3000) : token.priceUsd;
+    return (
     <div className="rounded-2xl bg-card p-4">
       <div className="text-xs text-muted-foreground mb-2">{label}</div>
       <div className="flex items-center gap-3">
@@ -134,7 +137,7 @@ function SwapPage() {
       {showActions && (
         <div className="flex items-center justify-between mt-3">
           <div className="text-xs text-muted-foreground tabular-nums">
-            ${(parseFloat(value || "0") * token.priceUsd).toFixed(2)}
+            ${(parseFloat(value || "0") * livePrice).toFixed(2)}
           </div>
           <div className="flex gap-1.5">
             <button
@@ -155,7 +158,7 @@ function SwapPage() {
         </div>
       )}
     </div>
-  );
+  )};
 
   return (
     <WalletShell>
@@ -194,7 +197,7 @@ function SwapPage() {
           disabled={isSwapping}
           className={`w-full mt-4 rounded-full bg-primary text-black font-semibold py-3.5 transition-opacity ${isSwapping ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}`}
         >
-          {isSwapping ? "Đang xử lý giao dịch..." : "Hoán đổi (Swap)"}
+          {isSwapping ? "Processing..." : "Swap"}
         </button>
 
         {/* Trending */}
@@ -230,7 +233,10 @@ function SwapPage() {
           </div>
 
           <ul className="flex flex-col">
-            {TRENDING.map((t) => (
+            {TRENDING.map((t) => {
+              const livePrice = prices[t.symbol]?.priceUsd || t.price;
+              const liveChange = prices[t.symbol]?.change24h || t.change;
+              return (
               <li key={t.symbol}>
                 <button className="w-full flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-xl hover:bg-secondary/40 transition-colors text-left">
                   <span className="text-xs text-muted-foreground tabular-nums w-4">{t.rank}</span>
@@ -247,21 +253,21 @@ function SwapPage() {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[15px] truncate">{t.symbol}</div>
                     <div className="text-xs text-muted-foreground tabular-nums">
-                      ${t.price < 0.01 ? t.price.toFixed(8) : t.price.toFixed(4)}
+                      ${livePrice < 0.01 ? livePrice.toFixed(8) : livePrice.toFixed(4)}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-[13px] font-medium tabular-nums">
                       {t.mc} <span className="text-muted-foreground text-[10px]">MC</span>
                     </div>
-                    <div className={`text-xs font-semibold tabular-nums ${t.change >= 0 ? "text-success" : "text-destructive"}`}>
-                      {t.change >= 0 ? "+" : ""}
-                      {t.change.toFixed(2)}%
+                    <div className={`text-xs font-semibold tabular-nums ${liveChange >= 0 ? "text-success" : "text-destructive"}`}>
+                      {liveChange >= 0 ? "+" : ""}
+                      {liveChange.toFixed(2)}%
                     </div>
                   </div>
                 </button>
               </li>
-            ))}
+            )})}
           </ul>
         </div>
       </div>

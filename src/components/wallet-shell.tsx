@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Copy, Check, Monitor, Maximize2, Search, Home, ArrowLeftRight, Clock, SlidersHorizontal, LogOut, Key } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ghostLogo from "@/assets/ghost-logo.png";
 import { toast } from "sonner";
 import { useWalletStore } from "@/store/wallet-store";
@@ -10,7 +10,14 @@ import { LockScreen } from "./lock-screen";
 export function WalletShell({ children, headerAction }: { children: React.ReactNode; headerAction?: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
   const location = useLocation();
-  const { address, mnemonic, privateKey, logout, isUnlocked, username } = useWalletStore();
+  const { address, mnemonic, privateKey, logout, isUnlocked, username, fetchPrices } = useWalletStore();
+
+  useEffect(() => {
+    fetchPrices();
+    // Also set up an interval to fetch every 60 seconds
+    const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
+  }, [fetchPrices]);
 
   if (!address) {
     return <OnboardingView />;
@@ -27,7 +34,7 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
   const copy = () => {
     navigator.clipboard.writeText(address);
     setCopied(true);
-    toast.success("Đã sao chép địa chỉ");
+    toast.success("Address copied");
     setTimeout(() => setCopied(false), 1500);
   };
 
@@ -38,22 +45,22 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
     toast(
       <div className="flex flex-col gap-2 p-1">
         <strong className="text-destructive font-bold">
-          {isMnemonic ? "Seed Phrase (Cụm từ khôi phục)" : "Private Key"}
+          {isMnemonic ? "Seed Phrase" : "Private Key"}
         </strong>
         <p className="font-mono text-xs break-all bg-secondary p-2 rounded-md border border-destructive/20 select-all">
           {secret}
         </p>
-        <p className="text-[10px] text-muted-foreground mt-1">Tuyệt đối không chia sẻ mã này cho bất kỳ ai!</p>
+        <p className="text-[10px] text-muted-foreground mt-1">Never share this with anyone!</p>
       </div>,
       { duration: 15000 }
     );
   };
 
   const tabs = [
-    { to: "/", label: "Trang chủ", icon: Home },
+    { to: "/", label: "Home", icon: Home },
     { to: "/swap", label: "Swap", icon: ArrowLeftRight },
-    { to: "/activity", label: "Hoạt động", icon: Clock },
-    { to: "/explore", label: "Khám phá", icon: Search },
+    { to: "/activity", label: "Activity", icon: Clock },
+    { to: "/explore", label: "Explore", icon: Search },
   ];
 
   return (
@@ -69,7 +76,7 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
               <img src={ghostLogo} alt="" width={28} height={28} className="size-7" />
             </span>
             <div className="leading-tight">
-              <div className="text-xs text-muted-foreground font-medium">{username || "Ví Sepolia"}</div>
+              <div className="text-xs text-muted-foreground font-medium">{username || "Sepolia Wallet"}</div>
               <div className="flex items-center gap-1.5 text-sm font-semibold">
                 {truncateAddress(address)}
                 {copied ? <Check className="size-3 text-success" /> : <Copy className="size-3 text-muted-foreground" />}
@@ -83,14 +90,14 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
                 <button 
                   onClick={showSecret}
                   className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-amber-400"
-                  title="Xem Seed Phrase / Private Key"
+                  title="View Seed Phrase / Private Key"
                 >
                   <Key className="size-4" />
                 </button>
                 <button 
                   onClick={logout}
                   className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-rose-400"
-                  title="Đăng xuất / Xóa ví"
+                  title="Log out / Delete wallet"
                 >
                   <LogOut className="size-4" />
                 </button>

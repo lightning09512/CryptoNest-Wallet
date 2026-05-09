@@ -4,7 +4,7 @@ import { ALL_TOKENS } from "@/lib/wallet-data";
 import { WalletShell } from "@/components/wallet-shell";
 
 export const Route = createFileRoute("/send-select")({
-  head: () => ({ meta: [{ title: "Chọn token — Fox Wallet" }] }),
+  head: () => ({ meta: [{ title: "Select Token — Fox Wallet" }] }),
   component: SendSelectPage,
 });
 
@@ -22,9 +22,9 @@ function SendSelectPage() {
     <WalletShell>
       <div className="p-4">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="size-4" /> Quay lại
+          <ArrowLeft className="size-4" /> Back
         </Link>
-        <h1 className="text-2xl font-bold mb-6">Chọn token để gửi</h1>
+        <h1 className="text-2xl font-bold mb-6">Select token to send</h1>
 
         <div className="space-y-2">
           {ALL_TOKENS.map((token) => {

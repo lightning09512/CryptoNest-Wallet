@@ -5,10 +5,10 @@ import { PortfolioView } from "@/components/portfolio-view";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Fox Wallet — Ví crypto Web3 demo" },
-      { name: "description", content: "Ví Web3 demo phong cách MetaMask: lưu trữ, gửi, nhận và swap crypto trên testnet." },
-      { property: "og:title", content: "Fox Wallet — Ví crypto Web3 demo" },
-      { property: "og:description", content: "Trải nghiệm ví Web3 phong cách MetaMask trên testnet." },
+      { title: "Fox Wallet — Web3 Crypto Wallet Demo" },
+      { name: "description", content: "MetaMask-style Web3 wallet demo: store, send, receive and swap crypto on testnet." },
+      { property: "og:title", content: "Fox Wallet — Web3 Crypto Wallet Demo" },
+      { property: "og:description", content: "Experience a MetaMask-style Web3 wallet on testnet." },
     ],
   }),
   component: Index,

@@ -21,7 +21,7 @@ export function LockScreen() {
         // Auto submit when 4 digits are entered
         const success = unlockWallet(val);
         if (!success) {
-          toast.error("Mã PIN không chính xác!");
+          toast.error("Incorrect PIN!");
           setPin(""); // reset
         }
       }
@@ -32,10 +32,14 @@ export function LockScreen() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-white font-sans max-w-md mx-auto">
       <div className="w-full flex justify-end mb-8">
         <button 
-          onClick={logout}
+          onClick={() => {
+            if (window.confirm("Are you sure you want to reset your wallet? You will need your Secret Recovery Phrase to restore access.")) {
+              logout();
+            }
+          }}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-rose-400 transition-colors"
         >
-          <LogOut className="size-4" /> Đăng xuất
+          <LogOut className="size-4" /> Forgot PIN? Reset wallet
         </button>
       </div>
 
@@ -46,9 +50,9 @@ export function LockScreen() {
         </div>
       </div>
       
-      <h1 className="text-2xl font-bold mb-2 text-center">Chào mừng trở lại!</h1>
+      <h1 className="text-2xl font-bold mb-2 text-center">Welcome back!</h1>
       <p className="text-muted-foreground text-center mb-10 text-sm">
-        {username ? username : "Nhập mã PIN để mở khóa ví của bạn"}
+        {username ? username : "Enter PIN to unlock your wallet"}
       </p>
 
       <div className="w-full max-w-[240px] mx-auto">

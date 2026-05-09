@@ -21,6 +21,8 @@ interface WalletState {
   unlockWallet: (pin: string) => boolean;
   lockWallet: () => void;
   addTx: (tx: Tx) => void;
+  prices: Record<string, { priceUsd: number; change24h: number }>;
+  fetchPrices: () => Promise<void>;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -35,6 +37,7 @@ export const useWalletStore = create<WalletState>()(
       username: null,
       isUnlocked: false,
       localTxs: [],
+      prices: {},
       
       createWallet: (pin: string, username: string) => {
         const wallet = ethers.Wallet.createRandom();
@@ -109,12 +112,39 @@ export const useWalletStore = create<WalletState>()(
 
       addTx: (tx: Tx) => {
         set((state) => ({ localTxs: [tx, ...state.localTxs] }));
+      },
+
+      fetchPrices: async () => {
+        try {
+          // Map our symbols to CoinGecko IDs
+          const coinGeckoIds = [
+            "bitcoin", "ethereum", "binancecoin", "ripple", "solana", "dogecoin"
+          ].join(',');
+
+          const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinGeckoIds}&vs_currencies=usd&include_24hr_change=true`);
+          if (!res.ok) throw new Error("Failed to fetch prices");
+          
+          const data = await res.json();
+          
+          const newPrices: Record<string, { priceUsd: number; change24h: number }> = {
+            "BTC": { priceUsd: data.bitcoin?.usd || 0, change24h: data.bitcoin?.usd_24h_change || 0 },
+            "ETH": { priceUsd: data.ethereum?.usd || 0, change24h: data.ethereum?.usd_24h_change || 0 },
+            "BNB": { priceUsd: data.binancecoin?.usd || 0, change24h: data.binancecoin?.usd_24h_change || 0 },
+            "XRP": { priceUsd: data.ripple?.usd || 0, change24h: data.ripple?.usd_24h_change || 0 },
+            "SOL": { priceUsd: data.solana?.usd || 0, change24h: data.solana?.usd_24h_change || 0 },
+            "DOGE": { priceUsd: data.dogecoin?.usd || 0, change24h: data.dogecoin?.usd_24h_change || 0 },
+          };
+
+          set({ prices: newPrices });
+        } catch (error) {
+          console.error("Error fetching prices from CoinGecko:", error);
+        }
       }
     }),
     {
       name: 'cryptonest-wallet-storage',
       partialize: (state) => Object.fromEntries(
-        Object.entries(state).filter(([key]) => key !== 'isUnlocked')
+        Object.entries(state).filter(([key]) => !['isUnlocked', 'prices'].includes(key))
       ),
     }
   )

@@ -8,7 +8,7 @@ import { fetchWalletBalance } from "@/lib/web3";
 export function PortfolioView() {
   const [showPromo, setShowPromo] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { address, balance, kcoinBalance, setBalance } = useWalletStore();
+  const { address, balance, kcoinBalance, setBalance, prices } = useWalletStore();
 
   useEffect(() => {
     if (address) {
@@ -21,8 +21,8 @@ export function PortfolioView() {
   }, [address, setBalance]);
 
   const ethAmount = parseFloat(balance || "0");
-  const ethPriceUsd = 3000; // Mock ETH price for demo
-  const kcoinPriceUsd = 1.0; // 1 KCoin = 1 USD
+  const ethPriceUsd = prices["ETH"]?.priceUsd || 3000; // Fallback to 3000 if not yet loaded
+  const kcoinPriceUsd = 36.41; // 1 KCoin = 36.41 USD
   
   const totalUsd = (ethAmount * ethPriceUsd) + (kcoinBalance * kcoinPriceUsd);
 
@@ -45,7 +45,14 @@ export function PortfolioView() {
   };
 
   // Combine real/local tokens with the mock tokens (ordered by Market Cap, KCoin at the bottom)
-  const displayTokens = TOKENS.map(t => t.symbol === "ETH" ? ethToken : t).concat([kcoinToken]);
+  const displayTokens = TOKENS.map(t => {
+    if (t.symbol === "ETH") return ethToken;
+    return {
+      ...t,
+      priceUsd: prices[t.symbol]?.priceUsd || t.priceUsd,
+      change24h: prices[t.symbol]?.change24h || t.change24h
+    };
+  }).concat([kcoinToken]);
 
   const actions = [
     { to: "/send-select", label: "Send", icon: Send },
@@ -63,7 +70,7 @@ export function PortfolioView() {
           ${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </h1>
         <div className="text-sm text-slate-400 mt-2">
-          {isRefreshing ? "Đang cập nhật..." : `${balance} ETH`}
+          {isRefreshing ? "Updating..." : `${balance} ETH`}
         </div>
       </div>
 
@@ -74,9 +81,9 @@ export function PortfolioView() {
             👋
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm">Chào mừng đến với CryptoNest!</div>
+            <div className="font-semibold text-sm">Welcome to CryptoNest!</div>
             <div className="text-xs text-muted-foreground mt-0.5">
-              Bạn có thể nhận ETH thử nghiệm miễn phí từ Sepolia Faucet.
+              You can get free testnet ETH from Sepolia Faucet.
             </div>
             <div className="flex gap-2 mt-3">
               <a 
@@ -85,10 +92,10 @@ export function PortfolioView() {
                 rel="noreferrer"
                 className="flex-1 rounded-full bg-primary text-black text-xs font-semibold py-2 text-center hover:opacity-90 transition-opacity"
               >
-                Xin ETH Testnet
+                Get Testnet ETH
               </a>
               <Link to="/receive" className="flex-1 rounded-full bg-secondary text-foreground text-xs font-semibold py-2 text-center hover:bg-accent transition-colors">
-                Nhận tiền
+                Receive
               </Link>
             </div>
           </div>
@@ -136,7 +143,7 @@ export function PortfolioView() {
 
       {/* Token list - Always visible on main screen */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-3">Tài sản của bạn</h2>
+        <h2 className="text-lg font-semibold mb-3">Your Assets</h2>
         <ul className="flex flex-col">
           {displayTokens.map((t) => {
             const value = t.balance * t.priceUsd;
