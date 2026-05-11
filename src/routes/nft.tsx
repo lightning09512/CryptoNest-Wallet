@@ -1,10 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Search, TrendingUp, Globe, Layers, BookOpen, Image, Grid3x3, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  Search,
+  TrendingUp,
+  Globe,
+  Layers,
+  BookOpen,
+  Image,
+  Grid3x3,
+  Star,
+} from "lucide-react";
 import { useState } from "react";
 import { WalletShell } from "@/components/wallet-shell";
 
 export const Route = createFileRoute("/nft")({
-  head: () => ({ meta: [{ title: "NFT — Fox Wallet" }] }),
+  head: () => ({ meta: [{ title: "NFT — CryptoNest Wallet" }] }),
   component: NFTPage,
 });
 
@@ -23,69 +33,69 @@ function NFTPage() {
 
   // Mock data cho trending collections
   const trendingCollections = [
-    { 
-      name: "Solana Monkey Business", 
-      symbol: "SMB", 
-      floorPrice: 15.8, 
-      volume24h: 125000, 
-      change: 8.5, 
+    {
+      name: "Solana Monkey Business",
+      symbol: "SMB",
+      floorPrice: 15.8,
+      volume24h: 125000,
+      change: 8.5,
       items: 5000,
       image: "🐵",
-      color: "#FFD13F"
+      color: "#FFD13F",
     },
-    { 
-      name: "DeGods", 
-      symbol: "DEGODS", 
-      floorPrice: 28.2, 
-      volume24h: 89000, 
-      change: -2.3, 
+    {
+      name: "DeGods",
+      symbol: "DEGODS",
+      floorPrice: 28.2,
+      volume24h: 89000,
+      change: -2.3,
       items: 10000,
       image: "👑",
-      color: "#AB9FF2"
+      color: "#AB9FF2",
     },
-    { 
-      name: "Okay Bears", 
-      symbol: "OKAY", 
-      floorPrice: 12.4, 
-      volume24h: 67000, 
-      change: 15.7, 
+    {
+      name: "Okay Bears",
+      symbol: "OKAY",
+      floorPrice: 12.4,
+      volume24h: 67000,
+      change: 15.7,
       items: 10000,
       image: "🐻",
-      color: "#2EC08B"
+      color: "#2EC08B",
     },
   ];
 
   // Mock data cho top collections
   const topCollections = [
-    { 
-      name: "Claynosaurz", 
+    {
+      name: "Claynosaurz",
       symbol: "CLAY",
-      floorPrice: 8.9, 
-      volume24h: 45000, 
-      change: 5.2, 
+      floorPrice: 8.9,
+      volume24h: 45000,
+      change: 5.2,
       items: 10000,
       image: "🦕",
-      color: "#4A87F2"
+      color: "#4A87F2",
     },
-    { 
-      name: "Mad Lads", 
+    {
+      name: "Mad Lads",
       symbol: "MAD",
-      floorPrice: 18.5, 
-      volume24h: 156000, 
-      change: 12.8, 
+      floorPrice: 18.5,
+      volume24h: 156000,
+      change: 12.8,
       items: 10000,
       image: "😎",
-      color: "#FF7243"
+      color: "#FF7243",
     },
-    { 
-      name: "Tinysaurus", 
+    {
+      name: "Tinysaurus",
       symbol: "TINY",
-      floorPrice: 3.2, 
-      volume24h: 23000, 
-      change: -5.6, 
+      floorPrice: 3.2,
+      volume24h: 23000,
+      change: -5.6,
       items: 5555,
       image: "🦖",
-      color: "#D95A2F"
+      color: "#D95A2F",
     },
   ];
 
@@ -108,14 +118,21 @@ function NFTPage() {
   // Mock data cho learn
   const learnContent = [
     { title: "NFT Basics", description: "Learn what NFTs are and how they work", icon: "📚" },
-    { title: "How to Mint", description: "Step-by-step guide to minting your first NFT", icon: "🚀" },
+    {
+      title: "How to Mint",
+      description: "Step-by-step guide to minting your first NFT",
+      icon: "🚀",
+    },
     { title: "NFT Security", description: "Best practices for keeping your NFTs safe", icon: "🔒" },
   ];
 
   return (
     <WalletShell>
       <div className="p-4">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
           <ArrowLeft className="size-4" /> Back
         </Link>
 
@@ -171,7 +188,10 @@ function NFTPage() {
                     key={collection.symbol}
                     className="w-full flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
                   >
-                    <div className="size-12 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ backgroundColor: collection.color }}>
+                    <div
+                      className="size-12 rounded-xl flex items-center justify-center text-lg shrink-0"
+                      style={{ backgroundColor: collection.color }}
+                    >
                       <span className="text-2xl">{collection.image}</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -189,8 +209,11 @@ function NFTPage() {
                       <div className="font-semibold text-sm">
                         {collection.floorPrice.toFixed(1)} SOL
                       </div>
-                      <div className={`text-xs ${collection.change >= 0 ? "text-success" : "text-destructive"}`}>
-                        {collection.change >= 0 ? "+" : ""}{collection.change.toFixed(1)}%
+                      <div
+                        className={`text-xs ${collection.change >= 0 ? "text-success" : "text-destructive"}`}
+                      >
+                        {collection.change >= 0 ? "+" : ""}
+                        {collection.change.toFixed(1)}%
                       </div>
                     </div>
                   </button>
@@ -202,9 +225,7 @@ function NFTPage() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold">Top Collections</h2>
-                <button className="text-sm text-primary hover:underline">
-                  See more
-                </button>
+                <button className="text-sm text-primary hover:underline">See more</button>
               </div>
               <div className="grid grid-cols-1 gap-3">
                 {topCollections.map((collection, index) => (
@@ -215,7 +236,10 @@ function NFTPage() {
                     <div className="size-8 rounded-lg flex items-center justify-center text-sm font-bold text-white bg-muted shrink-0">
                       #{index + 1}
                     </div>
-                    <div className="size-12 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ backgroundColor: collection.color }}>
+                    <div
+                      className="size-12 rounded-xl flex items-center justify-center text-lg shrink-0"
+                      style={{ backgroundColor: collection.color }}
+                    >
                       <span className="text-2xl">{collection.image}</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -228,8 +252,11 @@ function NFTPage() {
                       <div className="font-semibold text-sm">
                         {collection.floorPrice.toFixed(1)} SOL
                       </div>
-                      <div className={`text-xs ${collection.change >= 0 ? "text-success" : "text-destructive"}`}>
-                        {collection.change >= 0 ? "+" : ""}{collection.change.toFixed(1)}%
+                      <div
+                        className={`text-xs ${collection.change >= 0 ? "text-success" : "text-destructive"}`}
+                      >
+                        {collection.change >= 0 ? "+" : ""}
+                        {collection.change.toFixed(1)}%
                       </div>
                     </div>
                   </button>
@@ -255,7 +282,10 @@ function NFTPage() {
                     key={collection.symbol || collection.name}
                     className="w-full flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
                   >
-                    <div className="size-12 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ backgroundColor: collection.color }}>
+                    <div
+                      className="size-12 rounded-xl flex items-center justify-center text-lg shrink-0"
+                      style={{ backgroundColor: collection.color }}
+                    >
                       <span className="text-2xl">{collection.image}</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -271,8 +301,11 @@ function NFTPage() {
                       <div className="font-semibold text-sm">
                         {collection.floorPrice.toFixed(1)} SOL
                       </div>
-                      <div className={`text-xs ${collection.change >= 0 ? "text-success" : "text-destructive"}`}>
-                        {collection.change >= 0 ? "+" : ""}{collection.change.toFixed(1)}%
+                      <div
+                        className={`text-xs ${collection.change >= 0 ? "text-success" : "text-destructive"}`}
+                      >
+                        {collection.change >= 0 ? "+" : ""}
+                        {collection.change.toFixed(1)}%
                       </div>
                     </div>
                   </button>
@@ -298,7 +331,10 @@ function NFTPage() {
                     key={category.name}
                     className="w-full p-4 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
                   >
-                    <div className="size-12 rounded-xl flex items-center justify-center text-2xl mb-3" style={{ backgroundColor: category.color }}>
+                    <div
+                      className="size-12 rounded-xl flex items-center justify-center text-2xl mb-3"
+                      style={{ backgroundColor: category.color }}
+                    >
                       <span>{category.icon}</span>
                     </div>
                     <div className="font-medium text-sm">{category.name}</div>
@@ -328,14 +364,15 @@ function NFTPage() {
                     key={site.name}
                     className="w-full flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent transition-colors text-left"
                   >
-                    <div className="size-12 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ backgroundColor: site.color }}>
+                    <div
+                      className="size-12 rounded-xl flex items-center justify-center text-lg shrink-0"
+                      style={{ backgroundColor: site.color }}
+                    >
                       <span className="text-2xl">{site.icon}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm">{site.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {site.category}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{site.category}</div>
                     </div>
                   </button>
                 ))}
@@ -365,9 +402,7 @@ function NFTPage() {
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <div className="font-medium text-sm">{item.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {item.description}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{item.description}</div>
                     </div>
                   </button>
                 ))}
@@ -378,7 +413,9 @@ function NFTPage() {
 
         {/* Footer note */}
         <div className="mt-8 p-4 bg-card/50 rounded-xl text-xs text-muted-foreground leading-relaxed">
-          NFTs (Non-Fungible Tokens) are unique digital assets on the blockchain. Each NFT has a unique identifier and is non-interchangeable. NFT value can be volatile and is not guaranteed. Please do your own research before buying or selling NFTs.
+          NFTs (Non-Fungible Tokens) are unique digital assets on the blockchain. Each NFT has a
+          unique identifier and is non-interchangeable. NFT value can be volatile and is not
+          guaranteed. Please do your own research before buying or selling NFTs.
         </div>
       </div>
     </WalletShell>

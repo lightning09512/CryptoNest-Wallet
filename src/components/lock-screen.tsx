@@ -31,9 +31,13 @@ export function LockScreen() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-white font-sans max-w-md mx-auto">
       <div className="w-full flex justify-end mb-8">
-        <button 
+        <button
           onClick={() => {
-            if (window.confirm("Are you sure you want to reset your wallet? You will need your Secret Recovery Phrase to restore access.")) {
+            if (
+              window.confirm(
+                "Are you sure you want to reset your wallet? You will need your Secret Recovery Phrase to restore access.",
+              )
+            ) {
               logout();
             }
           }}
@@ -49,7 +53,7 @@ export function LockScreen() {
           <Lock className="size-4 text-primary" />
         </div>
       </div>
-      
+
       <h1 className="text-2xl font-bold mb-2 text-center">Welcome back!</h1>
       <p className="text-muted-foreground text-center mb-10 text-sm">
         {username ? username : "Enter PIN to unlock your wallet"}
@@ -69,16 +73,16 @@ export function LockScreen() {
         />
 
         {/* Visual Dots */}
-        <div 
+        <div
           className="flex justify-center gap-4 mb-8 cursor-text"
           onClick={() => inputRef.current?.focus()}
         >
           {[0, 1, 2, 3].map((index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`size-4 rounded-full transition-all duration-200 ${
-                pin.length > index 
-                  ? "bg-primary scale-110 shadow-[0_0_10px_rgba(var(--primary),0.5)]" 
+                pin.length > index
+                  ? "bg-primary scale-110 shadow-[0_0_10px_rgba(var(--primary),0.5)]"
                   : "bg-white/10"
               }`}
             />

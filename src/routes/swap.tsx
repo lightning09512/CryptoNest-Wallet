@@ -14,11 +14,56 @@ export const Route = createFileRoute("/swap")({
 });
 
 const TRENDING = [
-  { rank: 1, symbol: "SOL", name: "Solana", price: 168.42, mc: "$76.8B", change: 2.0, color: "oklch(0.7 0.2 295)", icon: "/img/solana.png" },
-  { rank: 2, symbol: "BNB", name: "Binance Coin", price: 612.45, mc: "$89.5B", change: 1.5, color: "oklch(0.65 0.15 45)", icon: "/img/bnb.png" },
-  { rank: 3, symbol: "DOGE", name: "Dogecoin", price: 0.16, mc: "$23.1B", change: 5.4, color: "oklch(0.7 0.15 35)", icon: "/img/doge.png" },
-  { rank: 4, symbol: "XRP", name: "Ripple", price: 0.52, mc: "$28.4B", change: -0.8, color: "oklch(0.6 0.2 340)", icon: "/img/xrp.png" },
-  { rank: 5, symbol: "ETH", name: "Ethereum", price: 3420.55, mc: "$411B", change: 1.2, color: "oklch(0.55 0.18 270)", icon: "/img/eth.png" },
+  {
+    rank: 1,
+    symbol: "SOL",
+    name: "Solana",
+    price: 168.42,
+    mc: "$76.8B",
+    change: 2.0,
+    color: "oklch(0.7 0.2 295)",
+    icon: "/img/solana.png",
+  },
+  {
+    rank: 2,
+    symbol: "BNB",
+    name: "Binance Coin",
+    price: 612.45,
+    mc: "$89.5B",
+    change: 1.5,
+    color: "oklch(0.65 0.15 45)",
+    icon: "/img/bnb.png",
+  },
+  {
+    rank: 3,
+    symbol: "DOGE",
+    name: "Dogecoin",
+    price: 0.16,
+    mc: "$23.1B",
+    change: 5.4,
+    color: "oklch(0.7 0.15 35)",
+    icon: "/img/doge.png",
+  },
+  {
+    rank: 4,
+    symbol: "XRP",
+    name: "Ripple",
+    price: 0.52,
+    mc: "$28.4B",
+    change: -0.8,
+    color: "oklch(0.6 0.2 340)",
+    icon: "/img/xrp.png",
+  },
+  {
+    rank: 5,
+    symbol: "ETH",
+    name: "Ethereum",
+    price: 3420.55,
+    mc: "$411B",
+    change: 1.2,
+    color: "oklch(0.55 0.18 270)",
+    icon: "/img/eth.png",
+  },
 ];
 
 const TABS = ["Tokens", "Perps"] as const;
@@ -51,72 +96,77 @@ const TokenBox = ({
   onSelect: () => void;
 }) => {
   return (
-  <div className="rounded-2xl bg-card p-4">
-    <div className="text-xs text-muted-foreground mb-2">{label}</div>
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        onClick={onSelect}
-        className="flex items-center gap-2 rounded-full bg-secondary hover:bg-accent transition-colors px-2 py-1 shrink-0"
-      >
-        {token.icon ? (
-          <img src={token.icon} alt={token.symbol} className="size-6 rounded-full object-cover bg-white" />
-        ) : (
-          <span
-            className="size-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
-            style={{ backgroundColor: token.color }}
-          >
-            {token.symbol.slice(0, 3)}
-          </span>
-        )}
-        <span className="font-bold text-sm">{token.symbol}</span>
-        <ChevronDown className="size-3.5 text-muted-foreground" />
-      </button>
-      <input
-        type="text"
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => {
-          const val = e.target.value.replace(/,/g, ".");
-          if (val === "" || /^\d*\.?\d*$/.test(val)) {
-            onChange?.(val);
-          }
-        }}
-        readOnly={readOnly}
-        placeholder="0"
-        className="flex-1 min-w-0 bg-transparent text-3xl font-semibold outline-none tabular-nums text-right no-spinner"
-      />
-    </div>
-    <div className="flex items-center justify-between mt-3">
-      <div className="text-xs text-muted-foreground tabular-nums">
-        ${(parseFloat(value || "0") * token.priceUsd).toFixed(2)}
+    <div className="rounded-2xl bg-card p-4">
+      <div className="text-xs text-muted-foreground mb-2">{label}</div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onSelect}
+          className="flex items-center gap-2 rounded-full bg-secondary hover:bg-accent transition-colors px-2 py-1 shrink-0"
+        >
+          {token.icon ? (
+            <img
+              src={token.icon}
+              alt={token.symbol}
+              className="size-6 rounded-full object-cover bg-white"
+            />
+          ) : (
+            <span
+              className="size-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+              style={{ backgroundColor: token.color }}
+            >
+              {token.symbol.slice(0, 3)}
+            </span>
+          )}
+          <span className="font-bold text-sm">{token.symbol}</span>
+          <ChevronDown className="size-3.5 text-muted-foreground" />
+        </button>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => {
+            const val = e.target.value.replace(/,/g, ".");
+            if (val === "" || /^\d*\.?\d*$/.test(val)) {
+              onChange?.(val);
+            }
+          }}
+          readOnly={readOnly}
+          placeholder="0"
+          className="flex-1 min-w-0 bg-transparent text-3xl font-semibold outline-none tabular-nums text-right no-spinner"
+        />
       </div>
-      {showActions && (
-        <div className="flex gap-1.5">
-          <button
-            type="button"
-            onClick={() => onChange?.((token.balance / 2).toString())}
-            className="rounded-full bg-secondary hover:bg-accent text-[10px] font-bold px-3 py-1 transition-colors"
-          >
-            50%
-          </button>
-          <button
-            type="button"
-            onClick={() => onChange?.(token.balance.toString())}
-            className="rounded-full bg-secondary hover:bg-accent text-[10px] font-bold px-3 py-1 transition-colors"
-          >
-            Max
-          </button>
+      <div className="flex items-center justify-between mt-3">
+        <div className="text-xs text-muted-foreground tabular-nums">
+          ${(parseFloat(value || "0") * token.priceUsd).toFixed(2)}
         </div>
-      )}
+        {showActions && (
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => onChange?.((token.balance / 2).toString())}
+              className="rounded-full bg-secondary hover:bg-accent text-[10px] font-bold px-3 py-1 transition-colors"
+            >
+              50%
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange?.(token.balance.toString())}
+              className="rounded-full bg-secondary hover:bg-accent text-[10px] font-bold px-3 py-1 transition-colors"
+            >
+              Max
+            </button>
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-)};
+  );
+};
 
 function SwapPage() {
   const nav = useNavigate();
   const { balance, kcoinBalance, privateKey, addKCoin, addTx, prices } = useWalletStore();
-  
+
   const ethAmount = parseFloat(balance || "0");
   const ethPriceUsd = prices["ETH"]?.priceUsd || 3420.55;
   const kcoinPriceUsd = 36.41;
@@ -140,7 +190,7 @@ function SwapPage() {
       icon: "/img/khanh.jpg",
     };
 
-    return TOKENS.map(t => {
+    return TOKENS.map((t) => {
       if (t.symbol === "ETH") return ethToken;
       return {
         ...t,
@@ -179,12 +229,12 @@ function SwapPage() {
     // Simulate swap logic
     setTimeout(() => {
       if (from.symbol === "KCOIN") {
-         useWalletStore.getState().subtractKCoin(parseFloat(amount));
+        useWalletStore.getState().subtractKCoin(parseFloat(amount));
       }
       if (to.symbol === "KCOIN") {
-         addKCoin(out);
+        addKCoin(out);
       }
-      
+
       addTx({
         id: `swap-${Date.now()}`,
         type: "swap",
@@ -203,8 +253,6 @@ function SwapPage() {
       nav({ to: "/" });
     }, 2000);
   };
-
-
 
   return (
     <WalletShell>
@@ -243,19 +291,19 @@ function SwapPage() {
         {/* Token Selector Modal */}
         {selectingFor && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div 
-              className="absolute inset-0" 
-              onClick={() => setSelectingFor(null)} 
-            />
+            <div className="absolute inset-0" onClick={() => setSelectingFor(null)} />
             <div className="relative w-full max-w-md bg-card border-t sm:border rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300">
               <div className="p-4 border-b flex items-center justify-between">
                 <h3 className="font-bold">Select Token</h3>
-                <button onClick={() => setSelectingFor(null)} className="p-2 hover:bg-secondary rounded-full">
+                <button
+                  onClick={() => setSelectingFor(null)}
+                  className="p-2 hover:bg-secondary rounded-full"
+                >
                   <X className="size-5" />
                 </button>
               </div>
               <div className="max-h-[60vh] overflow-y-auto scrollbar-hide p-2">
-                {ALL_SWAP_TOKENS.map(t => (
+                {ALL_SWAP_TOKENS.map((t) => (
                   <button
                     key={t.symbol}
                     onClick={() => {
@@ -266,9 +314,16 @@ function SwapPage() {
                     className="w-full flex items-center gap-3 p-3 hover:bg-secondary/60 rounded-2xl transition-colors text-left"
                   >
                     {t.icon ? (
-                      <img src={t.icon} alt={t.symbol} className="size-10 rounded-full object-cover bg-white" />
+                      <img
+                        src={t.icon}
+                        alt={t.symbol}
+                        className="size-10 rounded-full object-cover bg-white"
+                      />
                     ) : (
-                      <span className="size-10 rounded-full flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: t.color }}>
+                      <span
+                        className="size-10 rounded-full flex items-center justify-center text-white font-bold text-xs"
+                        style={{ backgroundColor: t.color }}
+                      >
                         {t.symbol.slice(0, 3)}
                       </span>
                     )}
@@ -278,7 +333,9 @@ function SwapPage() {
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-sm">{t.balance.toFixed(4)}</div>
-                      <div className="text-[10px] text-muted-foreground">${t.priceUsd.toFixed(2)}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        ${t.priceUsd.toFixed(2)}
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -332,37 +389,44 @@ function SwapPage() {
               const livePrice = prices[t.symbol]?.priceUsd || t.price;
               const liveChange = prices[t.symbol]?.change24h || t.change;
               return (
-              <li key={t.symbol}>
-                <button className="w-full flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-xl hover:bg-secondary/40 transition-colors text-left">
-                  <span className="text-xs text-muted-foreground tabular-nums w-4">{t.rank}</span>
-                  {t.icon ? (
-                    <img src={t.icon} alt={t.symbol} className="size-10 rounded-full shrink-0 object-cover bg-white" />
-                  ) : (
-                    <span
-                      className="size-10 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0"
-                      style={{ backgroundColor: t.color }}
-                    >
-                      {t.symbol.slice(0, 3)}
-                    </span>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-[15px] truncate">{t.symbol}</div>
-                    <div className="text-xs text-muted-foreground tabular-nums">
-                      ${livePrice < 0.01 ? livePrice.toFixed(8) : livePrice.toFixed(4)}
+                <li key={t.symbol}>
+                  <button className="w-full flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-xl hover:bg-secondary/40 transition-colors text-left">
+                    <span className="text-xs text-muted-foreground tabular-nums w-4">{t.rank}</span>
+                    {t.icon ? (
+                      <img
+                        src={t.icon}
+                        alt={t.symbol}
+                        className="size-10 rounded-full shrink-0 object-cover bg-white"
+                      />
+                    ) : (
+                      <span
+                        className="size-10 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0"
+                        style={{ backgroundColor: t.color }}
+                      >
+                        {t.symbol.slice(0, 3)}
+                      </span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[15px] truncate">{t.symbol}</div>
+                      <div className="text-xs text-muted-foreground tabular-nums">
+                        ${livePrice < 0.01 ? livePrice.toFixed(8) : livePrice.toFixed(4)}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[13px] font-medium tabular-nums">
-                      {t.mc} <span className="text-muted-foreground text-[10px]">MC</span>
+                    <div className="text-right">
+                      <div className="text-[13px] font-medium tabular-nums">
+                        {t.mc} <span className="text-muted-foreground text-[10px]">MC</span>
+                      </div>
+                      <div
+                        className={`text-xs font-semibold tabular-nums ${liveChange >= 0 ? "text-success" : "text-destructive"}`}
+                      >
+                        {liveChange >= 0 ? "+" : ""}
+                        {liveChange.toFixed(2)}%
+                      </div>
                     </div>
-                    <div className={`text-xs font-semibold tabular-nums ${liveChange >= 0 ? "text-success" : "text-destructive"}`}>
-                      {liveChange >= 0 ? "+" : ""}
-                      {liveChange.toFixed(2)}%
-                    </div>
-                  </div>
-                </button>
-              </li>
-            )})}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

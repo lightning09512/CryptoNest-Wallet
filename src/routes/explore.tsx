@@ -41,65 +41,64 @@ function ExplorePage() {
   // Categories data
   const categories = [
     { id: "tokens", label: "Tokens", icon: Circle, color: "#2E8B57", bgColor: "#1E3B2D" }, // Greenish
-    { id: "perps", label: "Perps", icon: Infinity, color: "#000", bgColor: "#FFC0CB" },    // Pinkish
-    { id: "lists", label: "Lists", icon: Layers, color: "#000", bgColor: "#B19CD9" },      // Purple
-    { id: "sites", label: "Sites", icon: Globe, color: "#fff", bgColor: "#4169E1" },       // Blue
+    { id: "perps", label: "Perps", icon: Infinity, color: "#000", bgColor: "#FFC0CB" }, // Pinkish
+    { id: "lists", label: "Lists", icon: Layers, color: "#000", bgColor: "#B19CD9" }, // Purple
+    { id: "sites", label: "Sites", icon: Globe, color: "#fff", bgColor: "#4169E1" }, // Blue
   ];
 
   // Mock data for trending sites
   const trendingSites = [
-    { 
-      name: "Jupiter", 
-      category: "DeFi", 
-      icon: "🪐", 
-      color: "#1a1e23", 
-      badge: "1", 
-      badgeColor: "#F5B041" 
+    {
+      name: "Jupiter",
+      category: "DeFi",
+      icon: "🪐",
+      color: "#1a1e23",
+      badge: "1",
+      badgeColor: "#F5B041",
     },
-    { 
-      name: "pump.fun", 
-      category: "DeFi", 
-      icon: "💊", 
-      color: "#ffffff", 
-      badge: "2", 
-      badgeColor: "#808B96" 
+    {
+      name: "pump.fun",
+      category: "DeFi",
+      icon: "💊",
+      color: "#ffffff",
+      badge: "2",
+      badgeColor: "#808B96",
     },
-    { 
-      name: "Zealy", 
-      category: "Community", 
-      icon: "Z", 
-      color: "#E83A65", 
-      badge: "3", 
-      badgeColor: "#E74C3C" 
+    {
+      name: "Zealy",
+      category: "Community",
+      icon: "Z",
+      color: "#E83A65",
+      badge: "3",
+      badgeColor: "#E74C3C",
     },
   ];
 
   // Mock data for learn
   const learnContent = [
-    { 
-      title: "Liquid Staking 101", 
-      description: "What is liquid staking?", 
+    {
+      title: "Liquid Staking 101",
+      description: "What is liquid staking?",
       icon: "🌊",
-      color: "#82E0AA"
+      color: "#82E0AA",
     },
-    { 
-      title: "Monad 101", 
-      description: "Learn more about Monad", 
+    {
+      title: "Monad 101",
+      description: "Learn more about Monad",
       icon: "👻",
-      color: "#34224A"
+      color: "#34224A",
     },
-    { 
-      title: "New ways to Pay", 
-      description: "Onboard with Google or Apple pay", 
+    {
+      title: "New ways to Pay",
+      description: "Onboard with Google or Apple pay",
       icon: "💳",
-      color: "#1c1c1c"
+      color: "#1c1c1c",
     },
   ];
 
   return (
     <WalletShell>
       <div className="min-h-screen min-w-[360px] bg-[#121212] px-4 pb-8 text-white font-sans">
-        
         {/* Placeholder for header area to match screenshot's top spacing */}
         <div className="pt-2">
           <div className="rounded-2xl bg-[#1e1e1e] px-4 py-3 mb-6">
@@ -121,7 +120,7 @@ function ExplorePage() {
           </div>
 
           {/* Categories Horizontal Scroll */}
-          <div 
+          <div
             ref={scrollRef}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
@@ -134,7 +133,7 @@ function ExplorePage() {
                 key={cat.id}
                 className="flex items-center gap-3 whitespace-nowrap rounded-[20px] bg-[#1c1c1e] pr-5 pl-1.5 py-1.5 transition hover:bg-white/[0.06] flex-shrink-0"
               >
-                <div 
+                <div
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]"
                   style={{ backgroundColor: cat.bgColor, color: cat.color }}
                 >
@@ -149,9 +148,11 @@ function ExplorePage() {
           <section>
             <div className="flex items-center justify-between mb-3 px-1">
               <h2 className="text-[17px] font-semibold text-white">Trending Sites</h2>
-              <button className="text-[14px] font-medium text-[#A688FA] hover:text-[#B698FA] transition">See More</button>
+              <button className="text-[14px] font-medium text-[#A688FA] hover:text-[#B698FA] transition">
+                See More
+              </button>
             </div>
-            
+
             <div className="rounded-[24px] bg-[#1c1c1e] p-2">
               {trendingSites.map((site) => (
                 <button
@@ -159,14 +160,17 @@ function ExplorePage() {
                   className="w-full flex items-center gap-4 rounded-[20px] px-3 py-3 text-left transition hover:bg-white/[0.04]"
                 >
                   <div className="relative shrink-0">
-                    <div 
+                    <div
                       className="flex h-14 w-14 items-center justify-center rounded-[18px] text-2xl font-bold shadow-inner"
-                      style={{ backgroundColor: site.color, color: site.name === 'pump.fun' ? '#000' : '#fff' }}
+                      style={{
+                        backgroundColor: site.color,
+                        color: site.name === "pump.fun" ? "#000" : "#fff",
+                      }}
                     >
                       {site.icon}
                     </div>
                     {/* Badge */}
-                    <div 
+                    <div
                       className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#1c1c1e] text-[10px] font-bold text-white shadow-sm"
                       style={{ backgroundColor: site.badgeColor }}
                     >
@@ -186,9 +190,11 @@ function ExplorePage() {
           <section>
             <div className="flex items-center justify-between mb-3 px-1">
               <h2 className="text-[17px] font-semibold text-white">Learn</h2>
-              <button className="text-[14px] font-medium text-[#A688FA] hover:text-[#B698FA] transition">See More</button>
+              <button className="text-[14px] font-medium text-[#A688FA] hover:text-[#B698FA] transition">
+                See More
+              </button>
             </div>
-            
+
             <div className="rounded-[24px] bg-[#1c1c1e] p-2">
               {learnContent.map((item) => (
                 <button
@@ -196,7 +202,7 @@ function ExplorePage() {
                   className="w-full flex items-center gap-4 rounded-[20px] px-3 py-3 text-left transition hover:bg-white/[0.04]"
                 >
                   <div className="relative shrink-0">
-                    <div 
+                    <div
                       className="flex h-14 w-14 items-center justify-center rounded-[18px] text-2xl"
                       style={{ backgroundColor: item.color }}
                     >
@@ -204,7 +210,9 @@ function ExplorePage() {
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[16px] font-semibold text-white truncate">{item.title}</div>
+                    <div className="text-[16px] font-semibold text-white truncate">
+                      {item.title}
+                    </div>
                     <div className="text-[14px] text-slate-400 truncate">{item.description}</div>
                   </div>
                 </button>
@@ -216,4 +224,3 @@ function ExplorePage() {
     </WalletShell>
   );
 }
-

@@ -11,7 +11,10 @@ function BuyPage() {
   return (
     <WalletShell>
       <div className="p-4">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
           <ArrowLeft className="size-4" /> Back
         </Link>
         <h1 className="text-2xl font-bold mb-6">Mua crypto</h1>
@@ -22,7 +25,8 @@ function BuyPage() {
           </div>
           <h2 className="mt-4 text-lg font-semibold">Coming Soon</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Fiat on-ramp integration with MoonPay and Transak to buy crypto with credit cards will be available in the next version.
+            Fiat on-ramp integration with MoonPay and Transak to buy crypto with credit cards will
+            be available in the next version.
           </p>
         </div>
       </div>

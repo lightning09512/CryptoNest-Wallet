@@ -3,7 +3,7 @@ import { ImageIcon } from "lucide-react";
 import { WalletShell } from "@/components/wallet-shell";
 
 export const Route = createFileRoute("/nfts")({
-  head: () => ({ meta: [{ title: "NFTs — Fox Wallet" }] }),
+  head: () => ({ meta: [{ title: "NFTs — CryptoNest Wallet" }] }),
   component: NftsPage,
 });
 
@@ -21,7 +21,10 @@ function NftsPage() {
         <h1 className="text-2xl font-bold mb-4">NFT Collection</h1>
         <div className="grid grid-cols-2 gap-3">
           {NFTS.map((n) => (
-            <div key={n.name} className="rounded-2xl border bg-card overflow-hidden hover:shadow-[var(--shadow-soft)] transition-shadow cursor-pointer">
+            <div
+              key={n.name}
+              className="rounded-2xl border bg-card overflow-hidden hover:shadow-[var(--shadow-soft)] transition-shadow cursor-pointer"
+            >
               <div
                 className="aspect-square flex items-center justify-center"
                 style={{ background: `linear-gradient(135deg, ${n.color}, oklch(0.95 0.02 70))` }}

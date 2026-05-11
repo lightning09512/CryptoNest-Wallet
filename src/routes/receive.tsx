@@ -13,7 +13,7 @@ export const Route = createFileRoute("/receive")({
 function ReceivePage() {
   const { address } = useWalletStore();
   const [copied, setCopied] = useState(false);
-  
+
   const displayAddress = address || "";
 
   const copy = () => {
@@ -29,7 +29,10 @@ function ReceivePage() {
   return (
     <WalletShell>
       <div className="p-4">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
           <ArrowLeft className="size-4" /> Back
         </Link>
         <h1 className="text-2xl font-bold mb-2">Receive Token</h1>
@@ -53,7 +56,8 @@ function ReceivePage() {
         </div>
 
         <div className="mt-4 rounded-xl bg-accent/50 border border-primary/20 p-3 text-xs text-accent-foreground">
-          ⚠️ Only send tokens on the <strong>Sepolia Testnet</strong>. Tokens sent on other networks may be lost.
+          ⚠️ Only send tokens on the <strong>Sepolia Testnet</strong>. Tokens sent on other networks
+          may be lost.
         </div>
       </div>
     </WalletShell>

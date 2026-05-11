@@ -1,5 +1,17 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Copy, Check, Monitor, Maximize2, Search, Home, ArrowLeftRight, Clock, SlidersHorizontal, LogOut, Key } from "lucide-react";
+import {
+  Copy,
+  Check,
+  Monitor,
+  Maximize2,
+  Search,
+  Home,
+  ArrowLeftRight,
+  Clock,
+  SlidersHorizontal,
+  LogOut,
+  Key,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import ghostLogo from "@/assets/ghost-logo.png";
 import { toast } from "sonner";
@@ -7,10 +19,19 @@ import { useWalletStore } from "@/store/wallet-store";
 import { OnboardingView } from "./onboarding-view";
 import { LockScreen } from "./lock-screen";
 
-export function WalletShell({ children, headerAction }: { children: React.ReactNode; headerAction?: React.ReactNode }) {
+export function WalletShell({
+  children,
+  headerAction,
+  fullWidth = false,
+}: {
+  children: React.ReactNode;
+  headerAction?: React.ReactNode;
+  fullWidth?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   const location = useLocation();
-  const { address, mnemonic, privateKey, logout, isUnlocked, username, fetchPrices } = useWalletStore();
+  const { address, mnemonic, privateKey, logout, isUnlocked, username, fetchPrices } =
+    useWalletStore();
 
   useEffect(() => {
     fetchPrices();
@@ -41,7 +62,7 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
   const showSecret = () => {
     const secret = mnemonic || privateKey;
     const isMnemonic = !!mnemonic;
-    
+
     toast(
       <div className="flex flex-col gap-2 p-1">
         <strong className="text-destructive font-bold">
@@ -52,7 +73,7 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
         </p>
         <p className="text-[10px] text-muted-foreground mt-1">Never share this with anyone!</p>
       </div>,
-      { duration: 15000 }
+      { duration: 15000 },
     );
   };
 
@@ -65,7 +86,9 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-md min-h-screen bg-background flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+      <div
+        className={`mx-auto ${fullWidth ? "max-w-none" : "max-w-md"} min-h-screen bg-background flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.5)] transition-all duration-500`}
+      >
         {/* Header */}
         <header className="flex items-center justify-between px-4 py-3 sticky top-0 z-50 bg-background/80 backdrop-blur-md">
           <button
@@ -76,10 +99,16 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
               <img src={ghostLogo} alt="" width={28} height={28} className="size-7" />
             </span>
             <div className="leading-tight">
-              <div className="text-xs text-muted-foreground font-medium">{username || "Sepolia Wallet"}</div>
+              <div className="text-xs text-muted-foreground font-medium">
+                {username || "Sepolia Wallet"}
+              </div>
               <div className="flex items-center gap-1.5 text-sm font-semibold">
                 {truncateAddress(address)}
-                {copied ? <Check className="size-3 text-success" /> : <Copy className="size-3 text-muted-foreground" />}
+                {copied ? (
+                  <Check className="size-3 text-success" />
+                ) : (
+                  <Copy className="size-3 text-muted-foreground" />
+                )}
               </div>
             </div>
           </button>
@@ -87,14 +116,14 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
           <div className="flex items-center gap-1 text-muted-foreground">
             {headerAction ?? (
               <>
-                <button 
+                <button
                   onClick={showSecret}
                   className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-amber-400"
                   title="View Seed Phrase / Private Key"
                 >
                   <Key className="size-4" />
                 </button>
-                <button 
+                <button
                   onClick={logout}
                   className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-rose-400"
                   title="Log out / Delete wallet"
@@ -122,8 +151,11 @@ export function WalletShell({ children, headerAction }: { children: React.ReactN
                   className="flex flex-col items-center justify-center px-4 py-2"
                   aria-label={t.label}
                 >
-                  <span className={`size-10 rounded-full flex items-center justify-center transition-colors ${active ? "bg-primary/15 text-primary" : "text-muted-foreground"
-                    }`}>
+                  <span
+                    className={`size-10 rounded-full flex items-center justify-center transition-colors ${
+                      active ? "bg-primary/15 text-primary" : "text-muted-foreground"
+                    }`}
+                  >
                     <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />
                   </span>
                 </Link>

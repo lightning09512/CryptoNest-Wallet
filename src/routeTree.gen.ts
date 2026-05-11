@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as SwapRouteImport } from './routes/swap'
 import { Route as SendSelectRouteImport } from './routes/send-select'
 import { Route as SendRouteImport } from './routes/send'
@@ -20,6 +21,11 @@ import { Route as BuyRouteImport } from './routes/buy'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TerminalRoute = TerminalRouteImport.update({
+  id: '/terminal',
+  path: '/terminal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SwapRoute = SwapRouteImport.update({
   id: '/swap',
   path: '/swap',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/send': typeof SendRoute
   '/send-select': typeof SendSelectRoute
   '/swap': typeof SwapRoute
+  '/terminal': typeof TerminalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/send': typeof SendRoute
   '/send-select': typeof SendSelectRoute
   '/swap': typeof SwapRoute
+  '/terminal': typeof TerminalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/send': typeof SendRoute
   '/send-select': typeof SendSelectRoute
   '/swap': typeof SwapRoute
+  '/terminal': typeof TerminalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/send'
     | '/send-select'
     | '/swap'
+    | '/terminal'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/send'
     | '/send-select'
     | '/swap'
+    | '/terminal'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/send'
     | '/send-select'
     | '/swap'
+    | '/terminal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,10 +170,18 @@ export interface RootRouteChildren {
   SendRoute: typeof SendRoute
   SendSelectRoute: typeof SendSelectRoute
   SwapRoute: typeof SwapRoute
+  TerminalRoute: typeof TerminalRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terminal': {
+      id: '/terminal'
+      path: '/terminal'
+      fullPath: '/terminal'
+      preLoaderRoute: typeof TerminalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/swap': {
       id: '/swap'
       path: '/swap'
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   SendRoute: SendRoute,
   SendSelectRoute: SendSelectRoute,
   SwapRoute: SwapRoute,
+  TerminalRoute: TerminalRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

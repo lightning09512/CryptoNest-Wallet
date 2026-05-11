@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss";
 @source "../src";
 @import "tw-animate-css";
 
@@ -165,6 +165,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -175,7 +176,9 @@
     -webkit-appearance: none;
     margin: 0;
   }
+
   .no-spinner {
     -moz-appearance: textfield;
+    appearance: textfield;
   }
 }

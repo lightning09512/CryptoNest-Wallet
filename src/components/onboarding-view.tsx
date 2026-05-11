@@ -5,14 +5,20 @@ import ghostLogo from "@/assets/ghost-logo.png";
 import { ArrowLeft, HelpCircle } from "lucide-react";
 import { ethers } from "ethers";
 
-type Step = "start" | "import" | "create-pin" | "create-username" | "create-seed" | "create-success";
+type Step =
+  | "start"
+  | "import"
+  | "create-pin"
+  | "create-username"
+  | "create-seed"
+  | "create-success";
 
 export function OnboardingView() {
   const { importWallet } = useWalletStore();
   const [step, setStep] = useState<Step>("start");
   const [showHelp, setShowHelp] = useState(false);
   const [flowType, setFlowType] = useState<"create" | "import">("create");
-  
+
   // Create flow states
   const [pin, setPin] = useState("");
   const [username, setUsername] = useState(`@User${Math.floor(Math.random() * 10000)}`);
@@ -33,16 +39,16 @@ export function OnboardingView() {
 
   const handleImport = () => {
     const phrase = words.join(" ").trim();
-    if (words.some(w => !w.trim())) {
+    if (words.some((w) => !w.trim())) {
       toast.error("Please enter all 12 recovery words");
       return;
     }
     try {
       let wallet;
-      if (phrase.includes(' ')) {
+      if (phrase.includes(" ")) {
         wallet = ethers.Wallet.fromPhrase(phrase);
       } else {
-        const formattedPk = phrase.startsWith('0x') ? phrase : `0x${phrase}`;
+        const formattedPk = phrase.startsWith("0x") ? phrase : `0x${phrase}`;
         wallet = new ethers.Wallet(formattedPk);
       }
       setTempPhrase(phrase);
@@ -86,7 +92,7 @@ export function OnboardingView() {
         newWords[index + i] = pastedWords[i];
       }
       setWords(newWords);
-      const nextEmptyIndex = newWords.findIndex(w => !w);
+      const nextEmptyIndex = newWords.findIndex((w) => !w);
       if (nextEmptyIndex !== -1) inputRefs.current[nextEmptyIndex]?.focus();
       else inputRefs.current[11]?.focus();
     } else {
@@ -95,11 +101,14 @@ export function OnboardingView() {
   };
 
   if (step === "import") {
-    const allFilled = words.every(w => w.trim().length > 0);
+    const allFilled = words.every((w) => w.trim().length > 0);
     return (
       <div className="min-h-screen bg-[#111111] flex flex-col items-center p-6 text-white font-sans w-full max-w-md mx-auto relative">
         <header className="w-full flex items-center justify-between mb-8 relative z-50">
-          <button onClick={() => setStep("start")} className="text-muted-foreground hover:text-white transition-colors">
+          <button
+            onClick={() => setStep("start")}
+            className="text-muted-foreground hover:text-white transition-colors"
+          >
             <ArrowLeft className="size-6" />
           </button>
           <div className="flex gap-2">
@@ -116,8 +125,14 @@ export function OnboardingView() {
               <h3 className="font-semibold text-sm mb-2 text-white">Import Guide</h3>
               <ul className="text-xs text-slate-300 space-y-2 list-disc pl-4">
                 <li>The recovery phrase consists of 12 English words separated by spaces.</li>
-                <li>You can copy and <strong>Paste</strong> all 12 words into the first box to fill them quickly.</li>
-                <li>If you only have a Private Key, paste the entire 64-character string into the first box.</li>
+                <li>
+                  You can copy and <strong>Paste</strong> all 12 words into the first box to fill
+                  them quickly.
+                </li>
+                <li>
+                  If you only have a Private Key, paste the entire 64-character string into the
+                  first box.
+                </li>
               </ul>
             </div>
           </div>
@@ -133,7 +148,9 @@ export function OnboardingView() {
             <div key={index} className="relative flex items-center">
               <span className="absolute left-3 text-muted-foreground text-sm">{index + 1}.</span>
               <input
-                ref={(el) => { inputRefs.current[index] = el; }}
+                ref={(el) => {
+                  inputRefs.current[index] = el;
+                }}
                 type="text"
                 value={word}
                 onChange={(e) => handleWordChange(index, e.target.value)}
@@ -147,11 +164,13 @@ export function OnboardingView() {
           ))}
         </div>
 
-        <button 
+        <button
           onClick={handleImport}
           disabled={!allFilled}
           className={`w-full font-bold py-4 rounded-full mt-8 transition-colors ${
-            allFilled ? "bg-primary text-black hover:bg-primary/90" : "bg-[#1c1c1e] text-muted-foreground cursor-not-allowed"
+            allFilled
+              ? "bg-primary text-black hover:bg-primary/90"
+              : "bg-[#1c1c1e] text-muted-foreground cursor-not-allowed"
           }`}
         >
           Continue
@@ -164,7 +183,10 @@ export function OnboardingView() {
     return (
       <div className="min-h-screen bg-[#111111] flex flex-col items-center p-6 text-white font-sans w-full max-w-md mx-auto">
         <header className="w-full mb-8">
-          <button onClick={() => setStep(flowType === "import" ? "import" : "start")} className="text-muted-foreground hover:text-white transition-colors">
+          <button
+            onClick={() => setStep(flowType === "import" ? "import" : "start")}
+            className="text-muted-foreground hover:text-white transition-colors"
+          >
             <ArrowLeft className="size-6" />
           </button>
         </header>
@@ -172,7 +194,9 @@ export function OnboardingView() {
         <p className="text-muted-foreground text-center mb-1 text-sm px-4">
           This passcode is used to secure your wallet across all your devices.
         </p>
-        <p className="text-amber-400 text-sm font-medium mb-12 text-center">This passcode cannot be recovered.</p>
+        <p className="text-amber-400 text-sm font-medium mb-12 text-center">
+          This passcode cannot be recovered.
+        </p>
 
         <input
           ref={pinInputRef}
@@ -182,11 +206,14 @@ export function OnboardingView() {
           onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
           className="opacity-0 absolute -left-[9999px]"
         />
-        
-        <div className="flex justify-center gap-4 mb-auto cursor-text" onClick={() => pinInputRef.current?.focus()}>
+
+        <div
+          className="flex justify-center gap-4 mb-auto cursor-text"
+          onClick={() => pinInputRef.current?.focus()}
+        >
           {[0, 1, 2, 3].map((index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`size-4 rounded-full transition-colors ${
                 pin.length > index ? "bg-white" : "bg-white/20"
               }`}
@@ -194,11 +221,13 @@ export function OnboardingView() {
           ))}
         </div>
 
-        <button 
+        <button
           onClick={() => setStep("create-username")}
           disabled={pin.length < 4}
           className={`w-full font-bold py-4 rounded-full mt-8 transition-colors ${
-            pin.length === 4 ? "bg-[#9a91f3] text-black hover:opacity-90" : "bg-[#1c1c1e] text-muted-foreground cursor-not-allowed"
+            pin.length === 4
+              ? "bg-[#9a91f3] text-black hover:opacity-90"
+              : "bg-[#1c1c1e] text-muted-foreground cursor-not-allowed"
           }`}
         >
           Continue
@@ -211,7 +240,10 @@ export function OnboardingView() {
     return (
       <div className="min-h-screen bg-[#111111] flex flex-col items-center p-6 text-white font-sans w-full max-w-md mx-auto">
         <header className="w-full mb-8">
-          <button onClick={() => setStep("create-pin")} className="text-muted-foreground hover:text-white transition-colors">
+          <button
+            onClick={() => setStep("create-pin")}
+            className="text-muted-foreground hover:text-white transition-colors"
+          >
             <ArrowLeft className="size-6" />
           </button>
         </header>
@@ -226,7 +258,7 @@ export function OnboardingView() {
           className="w-full bg-[#1c1c1e] border border-white/5 rounded-lg py-4 px-4 text-center text-lg font-semibold text-white outline-none focus:border-primary/50 transition-colors mb-auto"
           autoFocus
         />
-        <button 
+        <button
           onClick={() => {
             if (flowType === "create") {
               const w = ethers.Wallet.createRandom();
@@ -251,17 +283,21 @@ export function OnboardingView() {
       <div className="min-h-screen bg-[#111111] flex flex-col items-center p-6 text-white font-sans w-full max-w-md mx-auto">
         <h1 className="text-2xl font-bold mb-4 mt-8">Your Secret Recovery Phrase</h1>
         <p className="text-muted-foreground text-center mb-8 text-sm px-4">
-          Write down these words in the exact order and keep them safe. Never share them with anyone.
+          Write down these words in the exact order and keep them safe. Never share them with
+          anyone.
         </p>
         <div className="grid grid-cols-3 gap-3 w-full mb-auto">
           {tempWallet?.mnemonic?.phrase.split(" ").map((word: string, index: number) => (
-            <div key={index} className="flex items-center bg-[#1c1c1e] border border-white/5 rounded-lg py-3 px-3">
+            <div
+              key={index}
+              className="flex items-center bg-[#1c1c1e] border border-white/5 rounded-lg py-3 px-3"
+            >
               <span className="text-muted-foreground text-xs mr-2">{index + 1}.</span>
               <span className="text-sm text-white font-medium">{word}</span>
             </div>
           ))}
         </div>
-        <button 
+        <button
           onClick={() => setStep("create-success")}
           className="w-full bg-[#9a91f3] text-black font-bold py-4 rounded-full mt-8 hover:opacity-90 transition-opacity"
         >
@@ -275,10 +311,13 @@ export function OnboardingView() {
     return (
       <div className="min-h-screen bg-[#111111] flex flex-col items-center justify-center p-6 text-white font-sans w-full max-w-md mx-auto relative overflow-hidden">
         <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none" />
-        
+
         <div className="size-32 rounded-full bg-primary/20 flex items-center justify-center mb-6 relative">
-           <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
-           <span className="text-5xl font-bold text-[#9a91f3]">Hi!</span>
+          <div
+            className="absolute inset-0 bg-primary/10 rounded-full animate-ping"
+            style={{ animationDuration: "3s" }}
+          />
+          <span className="text-5xl font-bold text-[#9a91f3]">Hi!</span>
         </div>
 
         <h1 className="text-xl font-medium mb-10">{username}</h1>
@@ -292,7 +331,7 @@ export function OnboardingView() {
           You can now enjoy all the features of your wallet.
         </p>
 
-        <button 
+        <button
           onClick={finalizeCreation}
           className="w-full bg-[#9a91f3] text-black font-bold py-4 rounded-full mt-8 hover:opacity-90 transition-opacity relative z-10"
         >
@@ -307,14 +346,14 @@ export function OnboardingView() {
       <div className="size-24 mb-8 bg-gradient-to-br from-primary/30 to-primary/10 rounded-3xl flex items-center justify-center shadow-lg">
         <img src={ghostLogo} alt="Logo" className="size-16" />
       </div>
-      
+
       <h1 className="text-3xl font-bold mb-3 text-center">CryptoNest</h1>
       <p className="text-muted-foreground text-center mb-10 leading-relaxed">
         Your experimental Web3 wallet. Connect to the Ethereum Sepolia network to start trading.
       </p>
 
       <div className="w-full space-y-4">
-        <button 
+        <button
           onClick={() => {
             setFlowType("create");
             setStep("create-pin");
@@ -323,7 +362,7 @@ export function OnboardingView() {
         >
           Create a new wallet
         </button>
-        <button 
+        <button
           onClick={() => {
             setFlowType("import");
             setStep("import");

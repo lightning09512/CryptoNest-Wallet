@@ -12,7 +12,7 @@ export const Route = createFileRoute("/send")({
   component: SendPage,
   validateSearch: (search: Record<string, string>) => {
     return {
-      token: search.token as string || undefined,
+      token: (search.token as string) || undefined,
     };
   },
 });
@@ -21,15 +21,20 @@ function SendPage() {
   const { token: selectedToken } = Route.useSearch();
   const nav = useNavigate();
   const { privateKey, balance, kcoinBalance, subtractKCoin, addTx, prices } = useWalletStore();
-  
+
   const token = useMemo(() => {
     if (selectedToken === "KCOIN") {
       return { symbol: "KCOIN", name: "Khánh Coin", balance: kcoinBalance, priceUsd: 36.41 };
     }
     if (!selectedToken || selectedToken === "ETH") {
-      return { symbol: "ETH", name: "Sepolia ETH", balance: parseFloat(balance || "0"), priceUsd: prices.ETH?.priceUsd || 3420.55 };
+      return {
+        symbol: "ETH",
+        name: "Sepolia ETH",
+        balance: parseFloat(balance || "0"),
+        priceUsd: prices.ETH?.priceUsd || 3420.55,
+      };
     }
-    const found = ALL_TOKENS.find(t => t.symbol === selectedToken);
+    const found = ALL_TOKENS.find((t) => t.symbol === selectedToken);
     if (found) {
       return { ...found, priceUsd: prices[found.symbol]?.priceUsd || found.priceUsd };
     }
@@ -45,7 +50,7 @@ function SendPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!to || !amount) return toast.error("Please fill in all fields");
-    
+
     const amountFloat = parseFloat(amount);
     if (amountFloat > token.balance) {
       return toast.error(`Insufficient ${token.name} balance`);
@@ -102,16 +107,16 @@ function SendPage() {
         toast.success(
           <div className="flex flex-col gap-1">
             <span>Transaction successful!</span>
-            <a 
-              href={`https://sepolia.etherscan.io/tx/${result.hash}`} 
-              target="_blank" 
+            <a
+              href={`https://sepolia.etherscan.io/tx/${result.hash}`}
+              target="_blank"
               rel="noreferrer"
               className="text-primary text-xs flex items-center gap-1 underline"
             >
               View on Etherscan <ExternalLink className="size-3" />
             </a>
-          </div>, 
-          { id: toastId, duration: 8000 }
+          </div>,
+          { id: toastId, duration: 8000 },
         );
         nav({ to: "/activity" });
       } else {
@@ -125,7 +130,10 @@ function SendPage() {
   return (
     <WalletShell>
       <div className="p-4">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
           <ArrowLeft className="size-4" /> Back
         </Link>
         <h1 className="text-2xl font-bold mb-6">Send Token</h1>
@@ -140,7 +148,9 @@ function SendPage() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">Recipient Address (Sepolia)</label>
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">
+              Recipient Address (Sepolia)
+            </label>
             <input
               value={to}
               onChange={(e) => setTo(e.target.value)}
@@ -170,7 +180,11 @@ function SendPage() {
               </div>
               <div className="mt-1 flex justify-between text-xs text-muted-foreground">
                 <span>≈ ${usd.toFixed(2)}</span>
-                <button type="button" onClick={() => setAmount(String(token.balance))} className="font-medium text-primary hover:underline">
+                <button
+                  type="button"
+                  onClick={() => setAmount(String(token.balance))}
+                  className="font-medium text-primary hover:underline"
+                >
                   Max: {token.balance}
                 </button>
               </div>
