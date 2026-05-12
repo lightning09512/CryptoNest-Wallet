@@ -1,25 +1,25 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { 
-  createChart, 
-  ColorType, 
-  CandlestickSeries, 
-  Time, 
-  ISeriesApi, 
+import {
+  createChart,
+  ColorType,
+  CandlestickSeries,
+  Time,
+  ISeriesApi,
   CandlestickData,
   IChartApi
 } from 'lightweight-charts'
 import { WalletShell } from "@/components/wallet-shell"
 import { useWalletStore } from "@/store/wallet-store"
 import ghostLogo from "@/assets/ghost-logo.png";
-import { 
-  RotateCcw, 
-  Camera, 
-  Maximize2, 
-  BarChart3, 
-  Settings, 
-  Zap, 
-  ShieldCheck, 
+import {
+  RotateCcw,
+  Camera,
+  Maximize2,
+  BarChart3,
+  Settings,
+  Zap,
+  ShieldCheck,
   Info,
   ChevronDown,
   ChevronUp,
@@ -66,24 +66,86 @@ function TerminalPage() {
   const [copied, setCopied] = useState(false);
   const [timeframe, setTimeframe] = useState<TF>("15m");
   const [chartTab, setChartTab] = useState<"Biểu đồ" | "Thông tin Coin" | "Thông tin tin">("Biểu đồ");
+  const [bottomTab, setBottomTab] = useState("Vị thế");
   const [activeTab, setActiveTab] = useState<"Spot" | "Futures">("Futures");
   const [side, setSide] = useState<"long" | "short">("long");
   const [amount, setAmount] = useState("");
   const [leverage, setLeverage] = useState(10);
+  const [qtyUnit, setQtyUnit] = useState<"asset" | "usdt">("asset");
+  const [filterCurrentPair, setFilterCurrentPair] = useState(false);
   const [ohlc, setOhlc] = useState<{ o: number; h: number; l: number; c: number } | null>(null);
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const currentPrice = prices[selectedPair]?.priceUsd || 2300;
+  const [currentPrice, setCurrentPrice] = useState(2300);
   const currentPriceRef = useRef(currentPrice);
   const tickIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isLoadingHistory = useRef(false);
   const firstCandleTimeRef = useRef<number | null>(null);
+  const priceLinesRef = useRef<any[]>([]);
+  const [posCoords, setPosCoords] = useState<Record<string, number>>({});
 
+  // Sync ref with state for chart usage
   useEffect(() => {
     currentPriceRef.current = currentPrice;
   }, [currentPrice]);
+
+  // WebSocket and Fallback Price Engine
+  useEffect(() => {
+    const symbol = `${selectedPair.toLowerCase()}usdt`;
+    let ws: WebSocket | null = null;
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+
+    const connectWS = () => {
+      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@ticker`);
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const newPrice = parseFloat(data.c);
+        if (!isNaN(newPrice)) {
+          setCurrentPrice(newPrice);
+          currentPriceRef.current = newPrice;
+          // Clear fallback if WS is working
+          if (fallbackInterval) {
+            clearInterval(fallbackInterval);
+            fallbackInterval = null;
+          }
+        }
+      };
+
+      ws.onerror = () => {
+        console.warn("WebSocket error, using fallback polling");
+        startFallback();
+      };
+    };
+
+    const startFallback = () => {
+      if (fallbackInterval) return;
+      fallbackInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${selectedPair}USDT`);
+          const data = await res.json();
+          const newPrice = parseFloat(data.price);
+          if (!isNaN(newPrice)) {
+            setCurrentPrice(newPrice);
+            currentPriceRef.current = newPrice;
+          }
+        } catch (e) {
+          console.error("Price fallback failed", e);
+        }
+      }, 2000);
+    };
+
+    connectWS();
+    // Start fallback anyway to ensure we have a price immediately
+    startFallback();
+
+    return () => {
+      ws?.close();
+      if (fallbackInterval) clearInterval(fallbackInterval);
+    };
+  }, [selectedPair]);
 
   // ── Fetch real historical candles from Binance API ──────────────────
   const loadCandles = useCallback(
@@ -92,7 +154,7 @@ function TerminalPage() {
       if (!series || isLoadingHistory.current) return;
 
       isLoadingHistory.current = true;
-      
+
       const intervalMap: Record<string, string> = {
         "1m": "1m", "5m": "5m", "15m": "15m", "1h": "1h", "4h": "4h",
         "1D": "1d", "1W": "1w", "1M": "1M", "1Y": "1M",
@@ -120,10 +182,13 @@ function TerminalPage() {
 
         if (endTime) {
           const currentData = series.data() as CandlestickData[];
-          series.setData([...history, ...currentData].sort((a,b) => (a.time as number) - (b.time as number)));
+          series.setData([...history, ...currentData].sort((a, b) => (a.time as number) - (b.time as number)));
         } else {
           series.setData(history);
           const lastCandle = history[history.length - 1];
+          const startPrice = lastCandle.close;
+          setCurrentPrice(startPrice);
+          currentPriceRef.current = startPrice;
           setOhlc({ o: lastCandle.open, h: lastCandle.high, l: lastCandle.low, c: lastCandle.close });
           setupLiveTicks(tf, lastCandle);
         }
@@ -153,14 +218,15 @@ function TerminalPage() {
       const nowSec = Math.floor(Date.now() / 1000);
       const alignedTime = nowSec - (nowSec % candleSec);
 
-      if (alignedTime > currentCandleTime) {
-        currentCandleTime = alignedTime;
-      }
-
       setOhlc((prev) => {
-        const nextO = alignedTime > (prev?.o || 0) ? livePrice : prev?.o || livePrice;
-        const nextH = Math.max(prev?.h || livePrice, livePrice);
-        const nextL = Math.min(prev?.l || livePrice, livePrice);
+        const isNewCandle = alignedTime > currentCandleTime;
+        if (isNewCandle) {
+          currentCandleTime = alignedTime;
+        }
+
+        const nextO = isNewCandle ? livePrice : (prev?.o || livePrice);
+        const nextH = isNewCandle ? livePrice : Math.max(prev?.h || livePrice, livePrice);
+        const nextL = isNewCandle ? livePrice : Math.min(prev?.l || livePrice, livePrice);
 
         if (seriesRef.current) {
           seriesRef.current.update({
@@ -223,7 +289,7 @@ function TerminalPage() {
 
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({ 
+        chartRef.current.applyOptions({
           width: chartContainerRef.current.clientWidth,
           height: chartContainerRef.current.clientHeight
         });
@@ -240,27 +306,105 @@ function TerminalPage() {
     };
   }, [timeframe, loadCandles]);
 
+  // Sync Price Lines for Positions
+  useEffect(() => {
+    const series = seriesRef.current;
+    if (!series) return;
+
+    // Remove old lines
+    priceLinesRef.current.forEach(line => {
+      try { series.removePriceLine(line); } catch (e) { }
+    });
+    priceLinesRef.current = [];
+
+    // Add lines for current pair positions
+    positions
+      .filter(p => {
+        const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
+        return pSym.toUpperCase() === selectedPair.toUpperCase();
+      })
+      .forEach(p => {
+        const line = series.createPriceLine({
+          price: p.entryPrice,
+          color: p.side === 'long' ? '#22ab94' : '#ff4a68', // Professional exchange colors
+          lineWidth: 1,
+          lineStyle: 0, // Solid line
+          axisLabelVisible: true,
+          title: `${p.side.toUpperCase()} ${p.leverage}X`,
+        });
+        priceLinesRef.current.push(line);
+      });
+  }, [positions, selectedPair]);
+
+  // Update floating badge coordinates
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series || positions.length === 0) return;
+
+    const updateCoords = () => {
+      const newCoords: Record<string, number> = {};
+      positions.forEach(p => {
+        if (p.symbol.replace('/', '') === `${selectedPair}USDT`) {
+          const y = series.priceToCoordinate(p.entryPrice);
+          if (y !== null) newCoords[p.id] = y;
+        }
+      });
+      setPosCoords(newCoords);
+    };
+
+    chart.timeScale().subscribeVisibleLogicalRangeChange(updateCoords);
+    // Initial update
+    setTimeout(updateCoords, 100);
+
+    return () => {
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(updateCoords);
+    };
+  }, [positions, selectedPair, currentPrice]);
+
   const handleTrade = () => {
-    const val = parseFloat(amount);
-    if (!val || val <= 0) {
-      toast.error("Vui lòng nhập số lượng hợp lệ");
+    let qty = parseFloat(amount);
+    if (!qty || qty <= 0) {
+      toast.error("Vui lòng nhập số lượng");
       return;
     }
-    const cost = (val * currentPrice) / leverage;
-    if (cost > tradingBalance) {
-      toast.error("Số dư không đủ cho vị thế này");
+
+    // Convert USDT to Asset amount if needed
+    if (qtyUnit === "usdt") {
+      qty = qty / currentPrice;
+    }
+
+    const marginRequired = (qty * currentPrice) / leverage;
+
+    if (marginRequired > tradingBalance) {
+      toast.error("Số dư không đủ để ký quỹ");
       return;
     }
 
     openPosition(
       selectedPair,
       side,
-      val,
+      qty,
       leverage,
       currentPrice
     );
     setAmount("");
-    toast.success(`Đã mở vị thế ${side.toUpperCase()} cho ${selectedPair}`);
+    toast.success(`Đã mở vị thế ${side.toUpperCase()} ${selectedPair}`);
+  };
+  const handleCloseAll = () => {
+    const targets = positions.filter(p => {
+      if (!filterCurrentPair) return true;
+      const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
+      return pSym.toUpperCase() === selectedPair.toUpperCase();
+    });
+
+    if (targets.length === 0) {
+      toast.error("Không có vị thế nào để đóng");
+      return;
+    }
+
+    targets.forEach(p => closePosition(p.id, currentPrice));
+    toast.success(`Đã đóng ${targets.length} vị thế`);
   };
 
   return (
@@ -301,45 +445,45 @@ function TerminalPage() {
           </div>
 
           <div className="flex items-center gap-4">
-             <div className="hidden lg:flex items-center gap-4 text-[10px] font-black uppercase tracking-tighter mr-2">
-                <div className="text-muted-foreground">Tỷ lệ Funding: <span className="text-amber-500">0.0100%</span></div>
-                <div className="text-muted-foreground">Thời gian: <span className="text-foreground">07:59:59</span></div>
-             </div>
-             
-             <div className="h-8 w-px bg-border/50 mx-1 hidden sm:block" />
+            <div className="hidden lg:flex items-center gap-4 text-[10px] font-black uppercase tracking-tighter mr-2">
+              <div className="text-muted-foreground">Tỷ lệ Funding: <span className="text-amber-500">0.0100%</span></div>
+              <div className="text-muted-foreground">Thời gian: <span className="text-foreground">07:59:59</span></div>
+            </div>
 
-             {/* User Profile Section (BingX Style) */}
-             <div className="flex items-center gap-3 pl-2 border-l border-white/5">
-                <div className="flex flex-col items-end leading-none">
-                  <span className="text-[11px] font-bold text-foreground">{username || "User"}</span>
-                  <button 
-                    onClick={() => {
-                      if (address) {
-                        navigator.clipboard.writeText(address);
-                        setCopied(true);
-                        toast.success("Address copied");
-                        setTimeout(() => setCopied(false), 1500);
-                      }
-                    }}
-                    className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-                  >
-                    {address ? `${address.slice(0, 4)}...${address.slice(-4)}` : "0x00...0000"}
-                    {copied ? <Check className="size-2.5" /> : <Copy className="size-2.5" />}
-                  </button>
-                </div>
-                <div className="size-8 rounded-full bg-secondary flex items-center justify-center border border-white/10 overflow-hidden ring-2 ring-primary/20 ring-offset-2 ring-offset-background cursor-pointer hover:scale-110 transition-all">
-                  <img src={ghostLogo} alt="" className="size-6" />
-                </div>
-             </div>
+            <div className="h-8 w-px bg-border/50 mx-1 hidden sm:block" />
 
-             <div className="flex items-center gap-1 ml-2">
-               <button onClick={() => navigate({ to: "/" })} className="p-2 hover:bg-secondary text-muted-foreground hover:text-foreground rounded-lg transition-all" title="Quay lại Ví">
-                 <X className="size-4" />
-               </button>
-               <button className="p-2 hover:bg-secondary rounded-lg transition-all text-muted-foreground hover:text-foreground">
-                 <Settings className="size-4" />
-               </button>
-             </div>
+            {/* User Profile Section (BingX Style) */}
+            <div className="flex items-center gap-3 pl-2 border-l border-white/5">
+              <div className="flex flex-col items-end leading-none">
+                <span className="text-[11px] font-bold text-foreground">{username || "User"}</span>
+                <button
+                  onClick={() => {
+                    if (address) {
+                      navigator.clipboard.writeText(address);
+                      setCopied(true);
+                      toast.success("Address copied");
+                      setTimeout(() => setCopied(false), 1500);
+                    }
+                  }}
+                  className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  {address ? `${address.slice(0, 4)}...${address.slice(-4)}` : "0x00...0000"}
+                  {copied ? <Check className="size-2.5" /> : <Copy className="size-2.5" />}
+                </button>
+              </div>
+              <div className="size-8 rounded-full bg-secondary flex items-center justify-center border border-white/10 overflow-hidden ring-2 ring-primary/20 ring-offset-2 ring-offset-background cursor-pointer hover:scale-110 transition-all">
+                <img src={ghostLogo} alt="" className="size-6" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 ml-2">
+              <button onClick={() => navigate({ to: "/" })} className="p-2 hover:bg-secondary text-muted-foreground hover:text-foreground rounded-lg transition-all" title="Quay lại Ví">
+                <X className="size-4" />
+              </button>
+              <button className="p-2 hover:bg-secondary rounded-lg transition-all text-muted-foreground hover:text-foreground">
+                <Settings className="size-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -405,7 +549,7 @@ function TerminalPage() {
                   <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
                     <Search className="size-4" />
                   </div>
-                  
+
                   <div className="h-px w-6 bg-white/5 my-2" />
 
                   <div className="mt-auto flex flex-col gap-4">
@@ -439,6 +583,36 @@ function TerminalPage() {
                     </div>
                   )}
                   <div className="w-full h-full pr-1" ref={chartContainerRef} />
+
+                  {/* Floating Position Badges Overlay */}
+                  <div className="absolute inset-0 pointer-events-none z-20">
+                    {positions.filter(p => p.symbol.replace('/', '') === `${selectedPair}USDT`).map(p => {
+                      const y = posCoords[p.id];
+                      if (y === undefined || y < 0) return null;
+                      const pnl = p.side === 'long' ? (currentPrice - p.entryPrice) * p.amount : (p.entryPrice - currentPrice) * p.amount;
+
+                      return (
+                        <div
+                          key={`badge-${p.id}`}
+                          style={{ top: `${y}px`, transform: 'translateY(-50%)' }}
+                          className="absolute left-4 lg:left-10 flex items-center gap-0 overflow-hidden rounded-[4px] border border-white/10 shadow-2xl transition-all duration-75 pointer-events-auto"
+                        >
+                          <div className="bg-[#1E2329] px-2 py-1 text-[10px] font-black text-muted-foreground border-r border-white/5">
+                            {p.amount.toLocaleString()}
+                          </div>
+                          <div className={`px-2 py-1 text-[10px] font-black flex items-center gap-1 ${p.side === 'long' ? 'bg-success/90 text-white' : 'bg-destructive/90 text-white'}`}>
+                            {p.side.toUpperCase()} {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)}
+                          </div>
+                          <button
+                            onClick={() => closePosition(p.id, currentPrice)}
+                            className="bg-[#1E2329] px-2 py-1 hover:bg-destructive transition-colors border-l border-white/5"
+                          >
+                            <X className="size-3 text-white" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -461,7 +635,7 @@ function TerminalPage() {
                     <button className="px-1 hover:text-foreground uppercase font-bold">ETH</button>
                     <button className="px-1 hover:text-foreground uppercase font-bold">%</button>
                     <button className="px-1 hover:text-foreground uppercase font-bold">log</button>
-                    <button 
+                    <button
                       onClick={() => chartRef.current?.timeScale().fitContent()}
                       className="ml-2 px-2 py-0.5 bg-[#2a2e39] hover:bg-[#363a45] text-foreground rounded-[3px] text-[9px] font-black uppercase transition-all shadow-sm border border-white/5"
                     >
@@ -473,59 +647,156 @@ function TerminalPage() {
             </div>
 
             {/* 4. Footer Row: Positions & Orders Panel */}
-            <div className="min-h-[400px] bg-card/20 rounded-xl border border-white/5 flex flex-col overflow-hidden shadow-xl">
-              <div className="flex items-center justify-between px-4 py-2 border-b bg-card/20 shrink-0">
-                <div className="flex gap-6 text-[10px] font-black uppercase tracking-wider overflow-x-auto scrollbar-hide">
-                  <button className="text-primary border-b-2 border-primary pb-1.5 whitespace-nowrap">Vị thế ({positions.length})</button>
-                  <button className="text-muted-foreground hover:text-foreground pb-1.5 whitespace-nowrap">Lệnh mở (0)</button>
-                  <button className="text-muted-foreground hover:text-foreground pb-1.5 whitespace-nowrap">Lịch sử đặt lệnh</button>
-                  <button className="text-muted-foreground hover:text-foreground pb-1.5 whitespace-nowrap">Lịch sử giao dịch</button>
-                  <button className="text-muted-foreground hover:text-foreground pb-1.5 whitespace-nowrap">Lịch sử vị thế</button>
-                  <button className="text-muted-foreground hover:text-foreground pb-1.5 whitespace-nowrap">Lịch sử dòng vốn</button>
+            <div className="flex-1 bg-[#161A1E] rounded-xl border border-white/5 flex flex-col overflow-hidden shadow-2xl">
+              <div className="flex items-center justify-between px-4 border-b border-white/5 shrink-0 bg-card/20">
+                <div className="flex items-center gap-6">
+                  {[
+                    { id: "Vị thế", label: `Vị thế (${positions.length})` },
+                    { id: "Lệnh mở", label: "Lệnh mở (0)" },
+                    { id: "Lịch sử đặt lệnh", label: "Lịch sử đặt lệnh" },
+                    { id: "Lịch sử giao dịch", label: "Lịch sử giao dịch" },
+                    { id: "Lịch sử vị thế", label: "Lịch sử vị thế" },
+                    { id: "Lịch sử dòng vốn", label: "Lịch sử dòng vốn" }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setBottomTab(tab.id)}
+                      className={`text-[11px] font-black py-3 transition-all relative ${bottomTab === tab.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                      {tab.label}
+                      {bottomTab === tab.id && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary shadow-[0_0_8px_rgba(168,85,247,0.4)]" />
+                      )}
+                    </button>
+                  ))}
                 </div>
-                
-                <div className="flex items-center gap-3">
-                   <div className="flex items-center gap-2 mr-2">
-                     <input type="checkbox" className="size-3 rounded border-white/20 bg-transparent" id="current-only" />
-                     <label htmlFor="current-only" className="text-[9px] text-muted-foreground font-bold cursor-pointer">Cặp hiện tại</label>
-                   </div>
-                   <button className="px-3 py-1 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded font-black uppercase text-[9px] transition-all border border-destructive/20">
-                     Đóng toàn bộ
-                   </button>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      id="current-only" 
+                      checked={filterCurrentPair}
+                      onChange={(e) => setFilterCurrentPair(e.target.checked)}
+                      className="size-3 rounded border-white/10 bg-white/5 cursor-pointer accent-primary" 
+                    />
+                    <label htmlFor="current-only" className="text-[9px] text-muted-foreground font-bold cursor-pointer">Cặp hiện tại</label>
+                  </div>
+                  <button 
+                    onClick={handleCloseAll}
+                    className="px-3 py-1 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded font-black uppercase text-[9px] transition-all border border-destructive/20"
+                  >
+                    Đóng toàn bộ
+                  </button>
                 </div>
               </div>
-              <div className="flex-1 overflow-auto scrollbar-hide">
-                <table className="w-full text-left text-[11px]">
-                  <thead className="bg-secondary/10 sticky top-0 z-10">
-                    <tr className="text-muted-foreground border-b uppercase text-[9px] font-black">
-                      <th className="px-4 py-2">Thị trường</th>
-                      <th className="px-4 py-2">Kích thước</th>
-                      <th className="px-4 py-2">Giá vào</th>
-                      <th className="px-4 py-2">PnL</th>
-                      <th className="px-4 py-2 text-right">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/10">
-                    {positions.length === 0 ? (
-                      <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground italic">Không có vị thế hoạt động.</td></tr>
-                    ) : (
-                      positions.map(p => {
-                        const pnl = p.side === 'long' ? (currentPrice - p.entryPrice) * p.amount : (p.entryPrice - currentPrice) * p.amount;
-                        return (
-                          <tr key={p.id} className="hover:bg-secondary/20 transition-colors">
-                            <td className="px-4 py-3 font-bold">{p.symbol} <span className={p.side === 'long' ? "text-success" : "text-destructive"}>{p.leverage}x</span></td>
-                            <td className="px-4 py-3 tabular-nums">{p.amount}</td>
-                            <td className="px-4 py-3 text-muted-foreground tabular-nums">${p.entryPrice.toLocaleString()}</td>
-                            <td className={`px-4 py-3 font-bold tabular-nums ${pnl >= 0 ? "text-success" : "text-destructive"}`}>{pnl.toFixed(2)}</td>
-                            <td className="px-4 py-3 text-right">
-                              <button onClick={() => closePosition(p.id, currentPrice)} className="px-2 py-0.5 rounded bg-secondary hover:bg-destructive hover:text-white transition-all font-bold uppercase text-[9px]">Đóng</button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+
+              <div className="flex-1 overflow-x-auto scrollbar-hide">
+                {bottomTab === "Vị thế" ? (
+                  <table className="w-full text-left min-w-[900px]">
+                    <thead className="bg-secondary/5 sticky top-0 z-10 border-b border-white/5">
+                      <tr className="text-muted-foreground uppercase text-[9px] font-black tracking-wider whitespace-nowrap">
+                        <th className="px-4 py-2">Hợp đồng</th>
+                        <th className="px-4 py-2">Kích thước</th>
+                        <th className="px-4 py-2">Giá vào</th>
+                        <th className="px-4 py-2">Giá đánh dấu</th>
+                        <th className="px-4 py-2">Giá thanh lý</th>
+                        <th className="px-4 py-2">Ký quỹ</th>
+                        <th className="px-4 py-2">Lãi Lỗ (PNL%)</th>
+                        <th className="px-4 py-2 text-right">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {(() => {
+                        const filtered = positions.filter(p => {
+                          if (!filterCurrentPair) return true;
+                          const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
+                          return pSym.toUpperCase() === selectedPair.toUpperCase();
+                        });
+
+                        if (filtered.length === 0) {
+                          return <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground text-[11px] italic">Không có vị thế hoạt động.</td></tr>;
+                        }
+
+                        return filtered.map(p => {
+                          const pnl = p.side === 'long' ? (currentPrice - p.entryPrice) * p.amount : (p.entryPrice - currentPrice) * p.amount;
+                          const margin = (p.amount * p.entryPrice) / p.leverage;
+                          const pnlPercent = (pnl / margin) * 100;
+                          const liqPrice = p.side === 'long'
+                            ? p.entryPrice * (1 - 0.95 / p.leverage)
+                            : p.entryPrice * (1 + 0.95 / p.leverage);
+
+                          return (
+                            <tr key={p.id} className="group hover:bg-white/[0.03] transition-colors relative whitespace-nowrap">
+                              <td className="px-4 py-3 relative">
+                                {/* Left indicator bar - Integrated */}
+                                <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${p.side === 'long' ? 'bg-success' : 'bg-destructive'}`} />
+
+                                <div className="flex flex-col ml-1">
+                                  <div className="text-[12px] font-black text-foreground uppercase">{p.symbol.replace('/', '')}</div>
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <span className={`px-1 rounded-[2px] text-[9px] font-black uppercase ${p.side === 'long' ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
+                                      {p.side === 'long' ? 'Long' : 'Short'}
+                                    </span>
+                                    <span className="px-1 rounded-[2px] bg-white/10 text-muted-foreground/60 text-[9px] font-black uppercase">{p.leverage}X</span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3 text-[12px] font-bold tabular-nums text-foreground">
+                                {qtyUnit === "asset"
+                                  ? p.amount.toLocaleString()
+                                  : (p.amount * currentPrice).toLocaleString(undefined, { maximumFractionDigits: 2 }) + " USDT"
+                                }
+                              </td>
+
+                              <td className="px-4 py-3 text-[12px] font-medium tabular-nums text-muted-foreground">
+                                {p.entryPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </td>
+
+                              <td className="px-4 py-3 text-[12px] font-medium tabular-nums text-primary">
+                                {currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </td>
+
+                              <td className="px-4 py-3 text-[12px] font-medium tabular-nums text-destructive">
+                                {liqPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </td>
+
+                              <td className="px-4 py-3 text-[12px] font-medium tabular-nums text-foreground">
+                                {margin.toLocaleString(undefined, { minimumFractionDigits: 2 })} USDT
+                              </td>
+
+                              <td className="px-4 py-3">
+                                <div className="flex flex-col">
+                                  <div className={`text-[12px] font-bold tabular-nums ${pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                    {pnl >= 0 ? '+' : ''}{pnl.toFixed(4)}
+                                  </div>
+                                  <div className={`text-[10px] font-bold tabular-nums ${pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                    ({pnl >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%)
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3 text-right">
+                                <button
+                                  onClick={() => closePosition(p.id, currentPrice)}
+                                  className="px-4 py-1.5 rounded-md bg-[#1E2329] hover:bg-destructive hover:text-white transition-all font-black uppercase text-[10px] text-foreground"
+                                >
+                                  Đóng
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      })()}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-muted-foreground/40">
+                    <div className="text-[11px] font-black uppercase tracking-widest italic mb-2">No Data Available</div>
+                    <div className="text-[10px]">Tính năng {bottomTab} đang được đồng bộ...</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -554,9 +825,22 @@ function TerminalPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase mb-1.5">
-                      <span>Số lượng ({selectedPair})</span>
-                      <span>Tối đa: {((tradingBalance * leverage) / currentPrice).toFixed(3)}</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <button
+                        onClick={() => setQtyUnit(qtyUnit === "asset" ? "usdt" : "asset")}
+                        className="text-[10px] font-black uppercase text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                      >
+                        Số lượng ({qtyUnit === "asset" ? selectedPair : "USDT"})
+                        <RotateCcw className="size-2.5" />
+                      </button>
+                      <span className="text-[10px] font-black uppercase text-muted-foreground">
+                        Tối đa: {(() => {
+                          const max = qtyUnit === "asset" 
+                            ? (tradingBalance * leverage) / currentPrice 
+                            : (tradingBalance * leverage);
+                          return max.toLocaleString(undefined, { maximumFractionDigits: qtyUnit === "asset" ? 3 : 2 });
+                        })()}
+                      </span>
                     </div>
                     <div className="relative">
                       <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full bg-secondary/40 border border-white/5 focus:border-primary/50 rounded-xl px-4 py-3 outline-none text-lg font-black tabular-nums transition-all no-spinner" />
@@ -573,12 +857,26 @@ function TerminalPage() {
                   </div>
 
                   <div className="p-3 rounded-xl bg-secondary/20 border border-white/5 space-y-2">
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Ký quỹ</span><span className="font-bold tabular-nums text-foreground">{amount ? ((parseFloat(amount) * currentPrice) / leverage).toFixed(2) : "0.00"} USDT</span></div>
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Giá thanh lý</span><span className="font-bold tabular-nums text-destructive">{amount ? (side === "long" ? currentPrice * (1 - 1/leverage) : currentPrice * (1 + 1/leverage)).toFixed(2) : "--"}</span></div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">Ký quỹ</span>
+                      <span className="font-bold tabular-nums text-foreground">
+                        {amount ? (() => {
+                          const val = parseFloat(amount) || 0;
+                          const posValue = qtyUnit === "asset" ? val * currentPrice : val;
+                          return (posValue / leverage).toFixed(2);
+                        })() : "0.00"} USDT
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">Giá thanh lý</span>
+                      <span className="font-bold tabular-nums text-destructive">
+                        {amount ? (side === "long" ? currentPrice * (1 - 1 / leverage) : currentPrice * (1 + 1 / leverage)).toFixed(2) : "--"}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="pt-2">
-                     <div className="flex justify-between text-xs font-black mb-2 px-1">
+                    <div className="flex justify-between text-xs font-black mb-2 px-1">
                       <span className="text-muted-foreground">Số dư</span>
                       <span className="text-foreground tabular-nums">{(tradingBalance || 0).toLocaleString()} USDT</span>
                     </div>
@@ -586,8 +884,8 @@ function TerminalPage() {
                   </div>
 
                   <div className="mt-4 flex flex-col gap-2 opacity-60">
-                     <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10"><ShieldCheck className="size-3 text-primary" /><span className="text-[9px] font-black text-primary/80 uppercase">Isolated Margin</span></div>
-                     <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10"><Info className="size-3 text-amber-500" /><span className="text-[9px] font-black text-amber-500/80 uppercase">Real-time Price Engine</span></div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10"><ShieldCheck className="size-3 text-primary" /><span className="text-[9px] font-black text-primary/80 uppercase">Isolated Margin</span></div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10"><Info className="size-3 text-amber-500" /><span className="text-[9px] font-black text-amber-500/80 uppercase">Real-time Price Engine</span></div>
                   </div>
                 </div>
               </div>
@@ -632,7 +930,7 @@ function TerminalPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <button className="w-full py-2 bg-secondary/50 hover:bg-secondary text-[11px] font-bold rounded-lg transition-all mt-2">Phân tích Lãi Lỗ hợp đồng</button>
               </div>
             </div>
@@ -640,5 +938,5 @@ function TerminalPage() {
         </div>
       </div>
     </WalletShell>
-)
+  )
 }
