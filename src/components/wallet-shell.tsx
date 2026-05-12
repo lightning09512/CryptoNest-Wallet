@@ -23,10 +23,14 @@ export function WalletShell({
   children,
   headerAction,
   fullWidth = false,
+  hideNav = false,
+  hideHeader = false,
 }: {
   children: React.ReactNode;
   headerAction?: React.ReactNode;
   fullWidth?: boolean;
+  hideNav?: boolean;
+  hideHeader?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const location = useLocation();
@@ -90,7 +94,8 @@ export function WalletShell({
         className={`mx-auto ${fullWidth ? "max-w-none" : "max-w-md"} min-h-screen bg-background flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.5)] transition-all duration-500`}
       >
         {/* Header */}
-        <header className="flex items-center justify-between px-4 py-3 sticky top-0 z-50 bg-background/80 backdrop-blur-md">
+        {!hideHeader && (
+          <header className="flex items-center justify-between px-4 py-3 sticky top-0 z-50 bg-background/80 backdrop-blur-md">
           <button
             onClick={copy}
             className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-left"
@@ -134,35 +139,38 @@ export function WalletShell({
             )}
           </div>
         </header>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto scrollbar-hide">{children}</div>
 
         {/* Bottom tabs */}
-        <nav className="border-t border-border bg-background sticky bottom-0">
-          <div className="flex justify-around py-2">
-            {tabs.map((t) => {
-              const active = location.pathname === t.to;
-              const Icon = t.icon;
-              return (
-                <Link
-                  key={t.to}
-                  to={t.to}
-                  className="flex flex-col items-center justify-center px-4 py-2"
-                  aria-label={t.label}
-                >
-                  <span
-                    className={`size-10 rounded-full flex items-center justify-center transition-colors ${
-                      active ? "bg-primary/15 text-primary" : "text-muted-foreground"
-                    }`}
+        {!hideNav && (
+          <nav className="border-t border-border bg-background sticky bottom-0">
+            <div className="flex justify-around py-2">
+              {tabs.map((t) => {
+                const active = location.pathname === t.to;
+                const Icon = t.icon;
+                return (
+                  <Link
+                    key={t.to}
+                    to={t.to}
+                    className="flex flex-col items-center justify-center px-4 py-2"
+                    aria-label={t.label}
                   >
-                    <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
+                    <span
+                      className={`size-10 rounded-full flex items-center justify-center transition-colors ${
+                        active ? "bg-primary/15 text-primary" : "text-muted-foreground"
+                      }`}
+                    >
+                      <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        )}
       </div>
     </div>
   );
