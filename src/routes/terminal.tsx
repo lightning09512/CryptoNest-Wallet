@@ -62,7 +62,7 @@ const TF_VOLATILITY: Record<TF, number> = {
 function TerminalPage() {
   const navigate = useNavigate();
   const { address, mnemonic, privateKey, logout, username, prices, tradingBalance, positions, openPosition, closePosition } = useWalletStore();
-  const [selectedPair] = useState("ETH");
+  const [selectedPair, setSelectedPair] = useState("ETH");
   const [copied, setCopied] = useState(false);
   const [timeframe, setTimeframe] = useState<TF>("15m");
   const [chartTab, setChartTab] = useState<"Biểu đồ" | "Thông tin Coin" | "Thông tin tin">("Biểu đồ");
@@ -73,6 +73,90 @@ function TerminalPage() {
   const [leverage, setLeverage] = useState(10);
   const [qtyUnit, setQtyUnit] = useState<"asset" | "usdt">("asset");
   const [filterCurrentPair, setFilterCurrentPair] = useState(false);
+  const [isMarketSelectorOpen, setIsMarketSelectorOpen] = useState(false);
+  const [marketSearch, setMarketSearch] = useState("");
+  const [orderHistory, setOrderHistory] = useState<any[]>(() => {
+    const saved = localStorage.getItem('cryptonest_order_history');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [tradeHistory, setTradeHistory] = useState<any[]>(() => {
+    const saved = localStorage.getItem('cryptonest_trade_history');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [fundingHistory, setFundingHistory] = useState<any[]>(() => {
+    const saved = localStorage.getItem('cryptonest_funding_history');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [fundingRate, setFundingRate] = useState("0.0100%");
+  const [fundingTimer, setFundingTimer] = useState("08:00:00");
+
+  // Fetch Real Funding Rate & Countdown
+  useEffect(() => {
+    const updateFunding = async () => {
+      try {
+        const res = await fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${selectedPair.toUpperCase()}USDT`);
+        const data = await res.json();
+        if (data && data.lastFundingRate) {
+          const rate = (parseFloat(data.lastFundingRate) * 100).toFixed(4);
+          setFundingRate(`${rate}%`);
+        }
+      } catch (e) {}
+    };
+
+    updateFunding();
+    const interval = setInterval(updateFunding, 60000); // Update rate every minute
+    return () => clearInterval(interval);
+  }, [selectedPair]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const next = new Date();
+      // Funding happens every 8 hours: 0, 8, 16 UTC (7, 15, 23 VN)
+      const hours = now.getHours();
+      let targetHour = 7;
+      if (hours >= 7 && hours < 15) targetHour = 15;
+      else if (hours >= 15 && hours < 23) targetHour = 23;
+      else if (hours >= 23) {
+        targetHour = 7;
+        next.setDate(next.getDate() + 1);
+      }
+      
+      next.setHours(targetHour, 0, 0, 0);
+      const diff = next.getTime() - now.getTime();
+      
+      const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+      const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+      const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+      setFundingTimer(`${h}:${m}:${s}`);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Persist history to localStorage
+  useEffect(() => {
+    localStorage.setItem('cryptonest_order_history', JSON.stringify(orderHistory));
+  }, [orderHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('cryptonest_trade_history', JSON.stringify(tradeHistory));
+  }, [tradeHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('cryptonest_funding_history', JSON.stringify(fundingHistory));
+  }, [fundingHistory]);
+  const TOP_COINS = [
+    { symbol: "BTC", name: "Bitcoin", logo: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
+    { symbol: "ETH", name: "Ethereum", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
+    { symbol: "SOL", name: "Solana", logo: "https://cryptologos.cc/logos/solana-sol-logo.png" },
+    { symbol: "BNB", name: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png" },
+    { symbol: "XRP", name: "XRP", logo: "https://cryptologos.cc/logos/xrp-xrp-logo.png" },
+    { symbol: "ADA", name: "Cardano", logo: "https://cryptologos.cc/logos/cardano-ada-logo.png" },
+    { symbol: "AVAX", name: "Avalanche", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
+    { symbol: "DOT", name: "Polkadot", logo: "https://cryptologos.cc/logos/polkadot-new-dot-logo.png" },
+    { symbol: "LINK", name: "Chainlink", logo: "https://cryptologos.cc/logos/chainlink-link-logo.png" },
+    { symbol: "NEAR", name: "Near", logo: "https://cryptologos.cc/logos/near-protocol-near-logo.png" },
+  ];
   const [ohlc, setOhlc] = useState<{ o: number; h: number; l: number; c: number } | null>(null);
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -85,6 +169,14 @@ function TerminalPage() {
   const firstCandleTimeRef = useRef<number | null>(null);
   const priceLinesRef = useRef<any[]>([]);
   const [posCoords, setPosCoords] = useState<Record<string, number>>({});
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus search input when selector opens
+  useEffect(() => {
+    if (isMarketSelectorOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [isMarketSelectorOpen]);
 
   // Sync ref with state for chart usage
   useEffect(() => {
@@ -97,48 +189,47 @@ function TerminalPage() {
     let ws: WebSocket | null = null;
     let fallbackInterval: ReturnType<typeof setInterval> | null = null;
 
+    // Reset price immediately to prevent "sticky" prices from previous assets
+    const initialPrice = prices[selectedPair]?.priceUsd || 0;
+    setCurrentPrice(initialPrice);
+    currentPriceRef.current = initialPrice;
+    setOhlc(null); // Clear OHLC to force refresh
+
     const connectWS = () => {
       ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@ticker`);
-
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         const newPrice = parseFloat(data.c);
         if (!isNaN(newPrice)) {
           setCurrentPrice(newPrice);
           currentPriceRef.current = newPrice;
-          // Clear fallback if WS is working
           if (fallbackInterval) {
             clearInterval(fallbackInterval);
             fallbackInterval = null;
           }
         }
       };
-
-      ws.onerror = () => {
-        console.warn("WebSocket error, using fallback polling");
-        startFallback();
-      };
+      ws.onerror = () => startFallback();
     };
 
     const startFallback = () => {
       if (fallbackInterval) return;
-      fallbackInterval = setInterval(async () => {
+      const fetchPrice = async () => {
         try {
-          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${selectedPair}USDT`);
+          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${selectedPair.toUpperCase()}USDT`);
           const data = await res.json();
           const newPrice = parseFloat(data.price);
           if (!isNaN(newPrice)) {
             setCurrentPrice(newPrice);
             currentPriceRef.current = newPrice;
           }
-        } catch (e) {
-          console.error("Price fallback failed", e);
-        }
-      }, 2000);
+        } catch (e) { }
+      };
+      fetchPrice(); // Fetch immediately once
+      fallbackInterval = setInterval(fetchPrice, 2000);
     };
 
     connectWS();
-    // Start fallback anyway to ensure we have a price immediately
     startFallback();
 
     return () => {
@@ -311,41 +402,45 @@ function TerminalPage() {
     const series = seriesRef.current;
     if (!series) return;
 
-    // Remove old lines
-    priceLinesRef.current.forEach(line => {
-      try { series.removePriceLine(line); } catch (e) { }
-    });
-    priceLinesRef.current = [];
-
-    // Add lines for current pair positions
-    positions
-      .filter(p => {
-        const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
-        return pSym.toUpperCase() === selectedPair.toUpperCase();
-      })
-      .forEach(p => {
-        const line = series.createPriceLine({
-          price: p.entryPrice,
-          color: p.side === 'long' ? '#22ab94' : '#ff4a68', // Professional exchange colors
-          lineWidth: 1,
-          lineStyle: 0, // Solid line
-          axisLabelVisible: true,
-          title: `${p.side.toUpperCase()} ${p.leverage}X`,
-        });
-        priceLinesRef.current.push(line);
+    // Small delay to ensure chart has processed data
+    const timer = setTimeout(() => {
+      priceLinesRef.current.forEach(line => {
+        try { series.removePriceLine(line); } catch (e) { }
       });
-  }, [positions, selectedPair]);
+      priceLinesRef.current = [];
+
+      positions
+        .filter(p => {
+          const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
+          return pSym.toUpperCase() === selectedPair.toUpperCase();
+        })
+        .forEach(p => {
+          const line = series.createPriceLine({
+            price: p.entryPrice,
+            color: p.side === 'long' ? '#10b981' : '#ef4444',
+            lineWidth: 1,
+            lineStyle: 0,
+            axisLabelVisible: true,
+            title: `${p.side.toUpperCase()} ${p.leverage}X`,
+          });
+          priceLinesRef.current.push(line);
+        });
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [positions, selectedPair, timeframe]); // Removed currentPrice
 
   // Update floating badge coordinates
   useEffect(() => {
     const chart = chartRef.current;
     const series = seriesRef.current;
-    if (!chart || !series || positions.length === 0) return;
+    if (!chart || !series) return;
 
     const updateCoords = () => {
       const newCoords: Record<string, number> = {};
       positions.forEach(p => {
-        if (p.symbol.replace('/', '') === `${selectedPair}USDT`) {
+        const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
+        if (pSym.toUpperCase() === selectedPair.toUpperCase()) {
           const y = series.priceToCoordinate(p.entryPrice);
           if (y !== null) newCoords[p.id] = y;
         }
@@ -354,13 +449,18 @@ function TerminalPage() {
     };
 
     chart.timeScale().subscribeVisibleLogicalRangeChange(updateCoords);
-    // Initial update
-    setTimeout(updateCoords, 100);
+
+    // Also update when chart is resized
+    const resizeObserver = new ResizeObserver(() => updateCoords());
+    if (chartContainerRef.current) resizeObserver.observe(chartContainerRef.current);
+
+    setTimeout(updateCoords, 150);
 
     return () => {
       chart.timeScale().unsubscribeVisibleLogicalRangeChange(updateCoords);
+      resizeObserver.disconnect();
     };
-  }, [positions, selectedPair, currentPrice]);
+  }, [positions, selectedPair, timeframe]); // Removed currentPrice
 
   const handleTrade = () => {
     let qty = parseFloat(amount);
@@ -388,9 +488,53 @@ function TerminalPage() {
       leverage,
       currentPrice
     );
+
+    // Record to Order History
+    setOrderHistory(prev => [{
+      id: Date.now(),
+      symbol: selectedPair,
+      side,
+      type: "MARKET",
+      amount: qty,
+      price: currentPrice,
+      status: "FILLED",
+      time: new Date().toLocaleTimeString()
+    }, ...prev]);
+
     setAmount("");
     toast.success(`Đã mở vị thế ${side.toUpperCase()} ${selectedPair}`);
   };
+
+  const handleClosePosition = (id: string, price: number) => {
+    const pos = positions.find(p => p.id === id);
+    if (!pos) return;
+
+    const pnl = pos.side === 'long' ? (price - pos.entryPrice) * pos.amount : (pos.entryPrice - price) * pos.amount;
+
+    // Record to Trade History
+    setTradeHistory(prev => [{
+      id: Date.now(),
+      symbol: pos.symbol,
+      side: pos.side,
+      entryPrice: pos.entryPrice,
+      closePrice: price,
+      amount: pos.amount,
+      pnl,
+      time: new Date().toLocaleTimeString()
+    }, ...prev]);
+
+    // Record to Funding History
+    setFundingHistory(prev => [{
+      id: Date.now(),
+      type: "REALIZED PNL",
+      amount: pnl,
+      asset: "USDT",
+      time: new Date().toLocaleTimeString()
+    }, ...prev]);
+
+    closePosition(id, price);
+  };
+
   const handleCloseAll = () => {
     const targets = positions.filter(p => {
       if (!filterCurrentPair) return true;
@@ -403,7 +547,7 @@ function TerminalPage() {
       return;
     }
 
-    targets.forEach(p => closePosition(p.id, currentPrice));
+    targets.forEach(p => handleClosePosition(p.id, currentPrice));
     toast.success(`Đã đóng ${targets.length} vị thế`);
   };
 
@@ -413,15 +557,24 @@ function TerminalPage() {
         {/* Market Header - Sticky */}
         <div className="h-14 border-b bg-background/80 backdrop-blur-md flex items-center px-4 justify-between sticky top-0 z-[100] shrink-0">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary">Ξ</div>
+            <div
+              className="flex items-center gap-3 cursor-pointer hover:bg-white/5 px-2 py-1 rounded-lg transition-all group"
+              onClick={() => setIsMarketSelectorOpen(true)}
+            >
+              <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary overflow-hidden">
+                <img
+                  src={TOP_COINS.find(c => c.symbol === selectedPair)?.logo || "https://cryptologos.cc/logos/ethereum-eth-logo.png"}
+                  alt=""
+                  className="size-5"
+                />
+              </div>
               <div>
                 <div className="flex items-center gap-1.5 font-black text-sm uppercase tracking-tight">
                   {selectedPair}USDT
-                  <ChevronDown className="size-3 text-muted-foreground" />
+                  <ChevronDown className={`size-3 text-muted-foreground transition-transform ${isMarketSelectorOpen ? 'rotate-180' : ''}`} />
                 </div>
-                <div className="text-[10px] text-success font-medium flex items-center gap-0.5">
-                  <TrendingUp className="size-2.5" /> +1.24%
+                                                                                                                              <div className="text-[10px] text-success font-medium flex items-center gap-0.5">
+                                                                                                                                <TrendingUp className="size-2.5" /> +1.24%
                 </div>
               </div>
             </div>
@@ -446,8 +599,8 @@ function TerminalPage() {
 
           <div className="flex items-center gap-4">
             <div className="hidden lg:flex items-center gap-4 text-[10px] font-black uppercase tracking-tighter mr-2">
-              <div className="text-muted-foreground">Tỷ lệ Funding: <span className="text-amber-500">0.0100%</span></div>
-              <div className="text-muted-foreground">Thời gian: <span className="text-foreground">07:59:59</span></div>
+              <div className="text-muted-foreground">Tỷ lệ Funding: <span className="text-amber-500">{fundingRate}</span></div>
+              <div className="text-muted-foreground">Thời gian: <span className="text-foreground">{fundingTimer}</span></div>
             </div>
 
             <div className="h-8 w-px bg-border/50 mx-1 hidden sm:block" />
@@ -653,8 +806,8 @@ function TerminalPage() {
                   {[
                     { id: "Vị thế", label: `Vị thế (${positions.length})` },
                     { id: "Lệnh mở", label: "Lệnh mở (0)" },
-                    { id: "Lịch sử đặt lệnh", label: "Lịch sử đặt lệnh" },
-                    { id: "Lịch sử giao dịch", label: "Lịch sử giao dịch" },
+                    { id: "Lịch sử đặt lệnh", label: `Lịch sử đặt lệnh (${orderHistory.length})` },
+                    { id: "Lịch sử giao dịch", label: `Lịch sử giao dịch (${tradeHistory.length})` },
                     { id: "Lịch sử vị thế", label: "Lịch sử vị thế" },
                     { id: "Lịch sử dòng vốn", label: "Lịch sử dòng vốn" }
                   ].map((tab) => (
@@ -673,16 +826,16 @@ function TerminalPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      id="current-only" 
+                    <input
+                      type="checkbox"
+                      id="current-only"
                       checked={filterCurrentPair}
                       onChange={(e) => setFilterCurrentPair(e.target.checked)}
-                      className="size-3 rounded border-white/10 bg-white/5 cursor-pointer accent-primary" 
+                      className="size-3 rounded border-white/10 bg-white/5 cursor-pointer accent-primary"
                     />
                     <label htmlFor="current-only" className="text-[9px] text-muted-foreground font-bold cursor-pointer">Cặp hiện tại</label>
                   </div>
-                  <button 
+                  <button
                     onClick={handleCloseAll}
                     className="px-3 py-1 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded font-black uppercase text-[9px] transition-all border border-destructive/20"
                   >
@@ -719,21 +872,31 @@ function TerminalPage() {
                         }
 
                         return filtered.map(p => {
-                          const pnl = p.side === 'long' ? (currentPrice - p.entryPrice) * p.amount : (p.entryPrice - currentPrice) * p.amount;
+                          const pSymOnly = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
+                          // CRITICAL: Prioritize currentPrice if it's the active chart asset to ensure 100% sync
+                          const pMarkPrice = (pSymOnly.toUpperCase() === selectedPair.toUpperCase())
+                            ? currentPrice
+                            : (prices[pSymOnly]?.priceUsd || p.entryPrice);
+
+                          const pnl = p.side === 'long' ? (pMarkPrice - p.entryPrice) * p.amount : (p.entryPrice - pMarkPrice) * p.amount;
                           const margin = (p.amount * p.entryPrice) / p.leverage;
                           const pnlPercent = (pnl / margin) * 100;
-                          const liqPrice = p.side === 'long'
-                            ? p.entryPrice * (1 - 0.95 / p.leverage)
-                            : p.entryPrice * (1 + 0.95 / p.leverage);
+                          const liqPrice = p.side === 'long' ? p.entryPrice * (1 - 1 / p.leverage * 0.9) : p.entryPrice * (1 + 1 / p.leverage * 0.9);
 
                           return (
                             <tr key={p.id} className="group hover:bg-white/[0.03] transition-colors relative whitespace-nowrap">
-                              <td className="px-4 py-3 relative">
+                              <td 
+                                className="px-4 py-3 relative cursor-pointer group/sym"
+                                onClick={() => setSelectedPair(pSymOnly.toUpperCase())}
+                              >
                                 {/* Left indicator bar - Integrated */}
                                 <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${p.side === 'long' ? 'bg-success' : 'bg-destructive'}`} />
 
                                 <div className="flex flex-col ml-1">
-                                  <div className="text-[12px] font-black text-foreground uppercase">{p.symbol.replace('/', '')}</div>
+                                  <div className="text-[12px] font-black text-foreground uppercase group-hover/sym:text-primary transition-colors flex items-center gap-1">
+                                    {p.symbol.replace('/', '')}
+                                    <BarChart3 className="size-2.5 opacity-0 group-hover/sym:opacity-100 transition-opacity text-primary" />
+                                  </div>
                                   <div className="flex items-center gap-1 mt-1">
                                     <span className={`px-1 rounded-[2px] text-[9px] font-black uppercase ${p.side === 'long' ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
                                       {p.side === 'long' ? 'Long' : 'Short'}
@@ -746,7 +909,7 @@ function TerminalPage() {
                               <td className="px-4 py-3 text-[12px] font-bold tabular-nums text-foreground">
                                 {qtyUnit === "asset"
                                   ? p.amount.toLocaleString()
-                                  : (p.amount * currentPrice).toLocaleString(undefined, { maximumFractionDigits: 2 }) + " USDT"
+                                  : (p.amount * pMarkPrice).toLocaleString(undefined, { maximumFractionDigits: 2 }) + " USDT"
                                 }
                               </td>
 
@@ -755,7 +918,7 @@ function TerminalPage() {
                               </td>
 
                               <td className="px-4 py-3 text-[12px] font-medium tabular-nums text-primary">
-                                {currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                {pMarkPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                               </td>
 
                               <td className="px-4 py-3 text-[12px] font-medium tabular-nums text-destructive">
@@ -769,7 +932,7 @@ function TerminalPage() {
                               <td className="px-4 py-3">
                                 <div className="flex flex-col">
                                   <div className={`text-[12px] font-bold tabular-nums ${pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                    {pnl >= 0 ? '+' : ''}{pnl.toFixed(4)}
+                                    {pnl >= 0 ? '+' : ''}{pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </div>
                                   <div className={`text-[10px] font-bold tabular-nums ${pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
                                     ({pnl >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%)
@@ -779,7 +942,7 @@ function TerminalPage() {
 
                               <td className="px-4 py-3 text-right">
                                 <button
-                                  onClick={() => closePosition(p.id, currentPrice)}
+                                  onClick={() => handleClosePosition(p.id, pMarkPrice)}
                                   className="px-4 py-1.5 rounded-md bg-[#1E2329] hover:bg-destructive hover:text-white transition-all font-black uppercase text-[10px] text-foreground"
                                 >
                                   Đóng
@@ -789,6 +952,89 @@ function TerminalPage() {
                           );
                         })
                       })()}
+                    </tbody>
+                  </table>
+                ) : bottomTab === "Lịch sử đặt lệnh" ? (
+                  <table className="w-full text-left min-w-[800px]">
+                    <thead className="bg-secondary/5 border-b border-white/5">
+                      <tr className="text-muted-foreground uppercase text-[9px] font-black">
+                        <th className="px-4 py-3">Thời gian</th>
+                        <th className="px-4 py-3">Cặp</th>
+                        <th className="px-4 py-3">Loại</th>
+                        <th className="px-4 py-3">Hướng</th>
+                        <th className="px-4 py-3">Giá</th>
+                        <th className="px-4 py-3">Số lượng</th>
+                        <th className="px-4 py-3">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {orderHistory.length === 0 ? (
+                        <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground text-[11px] italic">Không có lịch sử đặt lệnh.</td></tr>
+                      ) : (
+                        orderHistory.map(o => (
+                          <tr key={o.id} className="text-[11px] font-bold hover:bg-white/[0.02]">
+                            <td className="px-4 py-3 text-muted-foreground">{o.time}</td>
+                            <td className="px-4 py-3 uppercase">{o.symbol}USDT</td>
+                            <td className="px-4 py-3 text-primary">{o.type}</td>
+                            <td className="px-4 py-3"><span className={o.side === 'long' ? 'text-success' : 'text-destructive'}>{o.side.toUpperCase()}</span></td>
+                            <td className="px-4 py-3 tabular-nums">{o.price.toLocaleString()}</td>
+                            <td className="px-4 py-3 tabular-nums">{o.amount.toFixed(4)}</td>
+                            <td className="px-4 py-3 text-success">{o.status}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                ) : bottomTab === "Lịch sử giao dịch" ? (
+                  <table className="w-full text-left min-w-[800px]">
+                    <thead className="bg-secondary/5 border-b border-white/5">
+                      <tr className="text-muted-foreground uppercase text-[9px] font-black">
+                        <th className="px-4 py-3">Thời gian</th>
+                        <th className="px-4 py-3">Cặp</th>
+                        <th className="px-4 py-3">Giá đóng</th>
+                        <th className="px-4 py-3">Số lượng</th>
+                        <th className="px-4 py-3">Lãi lỗ thực tế</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {tradeHistory.length === 0 ? (
+                        <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground text-[11px] italic">Không có lịch sử giao dịch.</td></tr>
+                      ) : (
+                        tradeHistory.map(t => (
+                          <tr key={t.id} className="text-[11px] font-bold hover:bg-white/[0.02]">
+                            <td className="px-4 py-3 text-muted-foreground">{t.time}</td>
+                            <td className="px-4 py-3 uppercase">{t.symbol}USDT</td>
+                            <td className="px-4 py-3 tabular-nums">{t.closePrice.toLocaleString()}</td>
+                            <td className="px-4 py-3 tabular-nums">{t.amount.toFixed(4)}</td>
+                            <td className={`px-4 py-3 tabular-nums ${t.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>{t.pnl.toFixed(2)} USDT</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                ) : bottomTab === "Lịch sử dòng vốn" ? (
+                  <table className="w-full text-left min-w-[800px]">
+                    <thead className="bg-secondary/5 border-b border-white/5">
+                      <tr className="text-muted-foreground uppercase text-[9px] font-black">
+                        <th className="px-4 py-3">Thời gian</th>
+                        <th className="px-4 py-3">Loại</th>
+                        <th className="px-4 py-3">Số tiền</th>
+                        <th className="px-4 py-3">Tài sản</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {fundingHistory.length === 0 ? (
+                        <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground text-[11px] italic">Không có lịch sử dòng vốn.</td></tr>
+                      ) : (
+                        fundingHistory.map(f => (
+                          <tr key={f.id} className="text-[11px] font-bold hover:bg-white/[0.02]">
+                            <td className="px-4 py-3 text-muted-foreground">{f.time}</td>
+                            <td className="px-4 py-3 text-primary uppercase">{f.type}</td>
+                            <td className={`px-4 py-3 tabular-nums ${f.amount >= 0 ? 'text-success' : 'text-destructive'}`}>{f.amount.toFixed(2)}</td>
+                            <td className="px-4 py-3">{f.asset}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 ) : (
@@ -835,8 +1081,8 @@ function TerminalPage() {
                       </button>
                       <span className="text-[10px] font-black uppercase text-muted-foreground">
                         Tối đa: {(() => {
-                          const max = qtyUnit === "asset" 
-                            ? (tradingBalance * leverage) / currentPrice 
+                          const max = qtyUnit === "asset"
+                            ? (tradingBalance * leverage) / currentPrice
                             : (tradingBalance * leverage);
                           return max.toLocaleString(undefined, { maximumFractionDigits: qtyUnit === "asset" ? 3 : 2 });
                         })()}
@@ -936,6 +1182,81 @@ function TerminalPage() {
             </div>
           </div>
         </div>
+        {/* Market Selector Dropdown (Slide Down Style) */}
+        {isMarketSelectorOpen && (
+          <>
+            <div className="fixed inset-0 z-[140]" onClick={() => setIsMarketSelectorOpen(false)} />
+            <div className="absolute top-14 left-4 z-[150] w-[450px] bg-[#161A1E] border border-white/10 rounded-b-2xl shadow-[0_30px_60px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-in slide-in-from-top-2 duration-200">
+              {/* Search Header */}
+              <div className="p-4 bg-card/10">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <input
+                    ref={searchInputRef}
+                    placeholder="Tìm kiếm crypto"
+                    className="w-full bg-[#0B0E11] border border-white/5 rounded-lg pl-10 pr-4 py-2 text-sm outline-none focus:border-primary/50 transition-all text-foreground"
+                    value={marketSearch}
+                    onChange={(e) => setMarketSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex gap-4 px-4 border-b border-white/5 bg-card/5">
+                {["Tuyển chọn", "Hợp đồng", "TradFi"].map((tab, idx) => (
+                  <button key={tab} className={`text-[11px] font-black py-3 relative ${idx === 0 ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+                    {tab}
+                    {idx === 0 && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+                  </button>
+                ))}
+              </div>
+
+              {/* Column Headers */}
+              <div className="grid grid-cols-[1fr_80px_80px] gap-2 px-4 py-2 text-[9px] font-black text-muted-foreground uppercase tracking-widest border-b border-white/5 bg-secondary/5">
+                <div className="flex items-center gap-1 cursor-pointer hover:text-foreground">Cặp giao dịch / KL <ChevronDown className="size-2" /></div>
+                <div className="text-right flex items-center justify-end gap-1 cursor-pointer hover:text-foreground">Giá cuối <ChevronDown className="size-2" /></div>
+                <div className="text-right flex items-center justify-end gap-1 cursor-pointer hover:text-foreground">T.đổi 24h <ChevronDown className="size-2" /></div>
+              </div>
+
+              {/* Market List */}
+              <div className="flex-1 overflow-y-auto max-h-[500px] scrollbar-hide">
+                <div className="grid grid-cols-1">
+                  {TOP_COINS.filter(c => c.symbol.toLowerCase().includes(marketSearch.toLowerCase()) || c.name.toLowerCase().includes(marketSearch.toLowerCase())).map((coin) => (
+                    <button
+                      key={coin.symbol}
+                      onClick={() => {
+                        setSelectedPair(coin.symbol);
+                        setIsMarketSelectorOpen(false);
+                        setMarketSearch("");
+                      }}
+                      className={`grid grid-cols-[1fr_80px_80px] gap-2 items-center p-4 hover:bg-white/5 transition-all group ${selectedPair === coin.symbol ? 'bg-primary/10' : ''}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <img src={coin.logo} alt="" className="size-6 rounded-full border border-white/10" />
+                          <div className="text-left">
+                            <div className="text-xs font-black uppercase text-foreground group-hover:text-primary transition-colors">{coin.symbol}USDT</div>
+                            <div className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">733.26M</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right text-[11px] font-bold tabular-nums text-foreground">
+                        {coin.symbol === "BTC" ? "63,241.50" : coin.symbol === "ETH" ? "2,311.73" : "1.24"}
+                      </div>
+                      <div className={`text-right text-[10px] font-black ${coin.symbol === "ETH" ? "text-destructive" : "text-success"}`}>
+                        {coin.symbol === "ETH" ? "-1.05%" : "+2.45%"}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#0B0E11] border-t border-white/5 flex items-center justify-center text-[9px] font-black uppercase text-muted-foreground/30">
+                Hiển thị dữ liệu thị trường trực tiếp
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </WalletShell>
   )
