@@ -1,14 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useRef, useState, useCallback } from 'react'
-import {
-  createChart,
-  ColorType,
-  CandlestickSeries,
-  Time,
-  ISeriesApi,
-  CandlestickData,
-  IChartApi
-} from 'lightweight-charts'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { WalletShell } from "@/components/wallet-shell"
 import { useWalletStore } from "@/store/wallet-store"
 import ghostLogo from "@/assets/ghost-logo.png";
@@ -59,6 +50,75 @@ const TF_VOLATILITY: Record<TF, number> = {
   "1m": 0.001, "5m": 0.002, "15m": 0.004, "1h": 0.008, "4h": 0.015, "1D": 0.03, "1W": 0.06, "1M": 0.12, "1Y": 0.25
 };
 
+// ── TradingView Widget (extracted & memoized to prevent re-mount on parent re-render) ──
+const TradingViewWidget = React.memo(({ symbol, interval }: { symbol: string; interval: string }) => {
+  const container = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!container.current) return;
+
+    // Clear previous widget
+    container.current.innerHTML = '<div id="tv_chart_container" style="width:100%;height:100%"></div>';
+
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/tv.js";
+    script.type = "text/javascript";
+    script.async = true;
+    script.onload = () => {
+      if (typeof (window as any).TradingView !== 'undefined') {
+        new (window as any).TradingView.widget({
+          autosize: true,
+          symbol: `BINANCE:${symbol}`,
+          interval: interval,
+          timezone: "Etc/UTC",
+          theme: "dark",
+          style: "1",
+          locale: "vi_VN",
+          toolbar_bg: "#161A1E",
+          enable_publishing: false,
+          hide_top_toolbar: false,
+          hide_legend: false,
+          save_image: false,
+          container_id: "tv_chart_container",
+          backgroundColor: "#0B0E11",
+          gridColor: "rgba(39, 39, 42, 0.3)",
+          withdateranges: true,
+          hide_side_toolbar: false,
+          details: false,
+          hotlist: false,
+          calendar: false,
+          show_popup_button: true,
+          popup_width: "1000",
+          popup_height: "650",
+          overrides: {
+            "mainSeriesProperties.candleStyle.upColor": "#22c55e",
+            "mainSeriesProperties.candleStyle.downColor": "#ef4444",
+            "mainSeriesProperties.candleStyle.drawWick": true,
+            "mainSeriesProperties.candleStyle.drawBorder": false,
+            "paneProperties.background": "#0B0E11",
+            "paneProperties.vertGridProperties.color": "rgba(39, 39, 42, 0.3)",
+            "paneProperties.horzGridProperties.color": "rgba(39, 39, 42, 0.3)",
+          }
+        });
+      }
+    };
+    container.current.appendChild(script);
+
+    return () => {
+      if (container.current) {
+        container.current.innerHTML = "";
+      }
+    };
+  }, [symbol, interval]);
+
+  return (
+    <div className="tradingview-widget-container w-full h-full" ref={container}>
+      <div id="tv_chart_container" className="w-full h-full" />
+    </div>
+  );
+});
+TradingViewWidget.displayName = 'TradingViewWidget';
+
 function TerminalPage() {
   const navigate = useNavigate();
   const { address, mnemonic, privateKey, logout, username, prices, tradingBalance, positions, openPosition, closePosition } = useWalletStore();
@@ -100,7 +160,7 @@ function TerminalPage() {
           const rate = (parseFloat(data.lastFundingRate) * 100).toFixed(4);
           setFundingRate(`${rate}%`);
         }
-      } catch (e) {}
+      } catch (e) { }
     };
 
     updateFunding();
@@ -121,10 +181,10 @@ function TerminalPage() {
         targetHour = 7;
         next.setDate(next.getDate() + 1);
       }
-      
+
       next.setHours(targetHour, 0, 0, 0);
       const diff = next.getTime() - now.getTime();
-      
+
       const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
       const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
       const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
@@ -159,17 +219,17 @@ function TerminalPage() {
   ];
   const [ohlc, setOhlc] = useState<{ o: number; h: number; l: number; c: number } | null>(null);
 
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const [currentPrice, setCurrentPrice] = useState(2300);
-  const currentPriceRef = useRef(currentPrice);
-  const tickIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isLoadingHistory = useRef(false);
-  const firstCandleTimeRef = useRef<number | null>(null);
-  const priceLinesRef = useRef<any[]>([]);
-  const [posCoords, setPosCoords] = useState<Record<string, number>>({});
+  // Compute widget props (stable values to pass to memoized widget)
+  const tvSymbol = `${selectedPair}USDT`;
+  const TV_INTERVAL_MAP: Record<TF, string> = {
+    "1m": "1", "5m": "5", "15m": "15", "1h": "60", "4h": "240",
+    "1D": "D", "1W": "W", "1M": "M", "1Y": "12M"
+  };
+  const tvInterval = TV_INTERVAL_MAP[timeframe] || "15";
+
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [currentPrice, setCurrentPrice] = useState(0);
+  const currentPriceRef = useRef(0);
 
   // Auto-focus search input when selector opens
   useEffect(() => {
@@ -238,229 +298,8 @@ function TerminalPage() {
     };
   }, [selectedPair]);
 
-  // ── Fetch real historical candles from Binance API ──────────────────
-  const loadCandles = useCallback(
-    async (tf: TF, endTime?: number) => {
-      const series = seriesRef.current;
-      if (!series || isLoadingHistory.current) return;
 
-      isLoadingHistory.current = true;
 
-      const intervalMap: Record<string, string> = {
-        "1m": "1m", "5m": "5m", "15m": "15m", "1h": "1h", "4h": "4h",
-        "1D": "1d", "1W": "1w", "1M": "1M", "1Y": "1M",
-      };
-      const interval = intervalMap[tf] || "1m";
-      const symbol = `${selectedPair}USDT`;
-      const limit = 1000;
-
-      try {
-        let url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-        if (endTime) url += `&endTime=${endTime}`;
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!Array.isArray(data)) throw new Error("Invalid API response");
-
-        const history: CandlestickData[] = data.map((d: any) => ({
-          time: (d[0] / 1000) as Time,
-          open: parseFloat(d[1]),
-          high: parseFloat(d[2]),
-          low: parseFloat(d[3]),
-          close: parseFloat(d[4]),
-        }));
-
-        if (endTime) {
-          const currentData = series.data() as CandlestickData[];
-          series.setData([...history, ...currentData].sort((a, b) => (a.time as number) - (b.time as number)));
-        } else {
-          series.setData(history);
-          const lastCandle = history[history.length - 1];
-          const startPrice = lastCandle.close;
-          setCurrentPrice(startPrice);
-          currentPriceRef.current = startPrice;
-          setOhlc({ o: lastCandle.open, h: lastCandle.high, l: lastCandle.low, c: lastCandle.close });
-          setupLiveTicks(tf, lastCandle);
-        }
-
-        if (history.length > 0) {
-          firstCandleTimeRef.current = (history[0].time as number) * 1000;
-        }
-
-      } catch (err) {
-        console.error("Failed to fetch history:", err);
-        if (!endTime) toast.error("Không thể tải dữ liệu từ Binance.");
-      } finally {
-        isLoadingHistory.current = false;
-      }
-    },
-    [selectedPair],
-  );
-
-  const setupLiveTicks = (tf: TF, lastCandle: CandlestickData) => {
-    if (tickIntervalRef.current) clearInterval(tickIntervalRef.current);
-
-    const candleSec = TF_SECONDS[tf];
-    let currentCandleTime = lastCandle.time as number;
-
-    tickIntervalRef.current = setInterval(() => {
-      const livePrice = currentPriceRef.current;
-      const nowSec = Math.floor(Date.now() / 1000);
-      const alignedTime = nowSec - (nowSec % candleSec);
-
-      setOhlc((prev) => {
-        const isNewCandle = alignedTime > currentCandleTime;
-        if (isNewCandle) {
-          currentCandleTime = alignedTime;
-        }
-
-        const nextO = isNewCandle ? livePrice : (prev?.o || livePrice);
-        const nextH = isNewCandle ? livePrice : Math.max(prev?.h || livePrice, livePrice);
-        const nextL = isNewCandle ? livePrice : Math.min(prev?.l || livePrice, livePrice);
-
-        if (seriesRef.current) {
-          seriesRef.current.update({
-            time: currentCandleTime as Time,
-            open: nextO,
-            high: nextH,
-            low: nextL,
-            close: livePrice,
-          });
-        }
-        return { o: nextO, h: nextH, l: nextL, c: livePrice };
-      });
-    }, 1000);
-  };
-
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
-
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#a1a1aa",
-      },
-      grid: {
-        vertLines: { color: "rgba(39, 39, 42, 0.3)" },
-        horzLines: { color: "rgba(39, 39, 42, 0.3)" },
-      },
-      width: chartContainerRef.current.clientWidth,
-      height: chartContainerRef.current.clientHeight || 500,
-      timeScale: {
-        borderColor: "rgba(39, 39, 42, 0.5)",
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      crosshair: {
-        vertLine: { color: "rgba(161,161,170,0.3)", labelBackgroundColor: "#1e1b4b" },
-        horzLine: { color: "rgba(161,161,170,0.3)", labelBackgroundColor: "#1e1b4b" },
-      },
-    });
-
-    chartRef.current = chart;
-
-    const series = chart.addSeries(CandlestickSeries, {
-      upColor: "#22c55e",
-      downColor: "#ef4444",
-      borderVisible: false,
-      wickUpColor: "#22c55e",
-      wickDownColor: "#ef4444",
-    });
-
-    seriesRef.current = series;
-    loadCandles(timeframe);
-
-    chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-      if (!range) return;
-      if (range.from < 50 && !isLoadingHistory.current && firstCandleTimeRef.current) {
-        loadCandles(timeframe, firstCandleTimeRef.current - 1);
-      }
-    });
-
-    const handleResize = () => {
-      if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: chartContainerRef.current.clientHeight
-        });
-      }
-    };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      if (tickIntervalRef.current) clearInterval(tickIntervalRef.current);
-      window.removeEventListener("resize", handleResize);
-      chart.remove();
-      chartRef.current = null;
-      seriesRef.current = null;
-    };
-  }, [timeframe, loadCandles]);
-
-  // Sync Price Lines for Positions
-  useEffect(() => {
-    const series = seriesRef.current;
-    if (!series) return;
-
-    // Small delay to ensure chart has processed data
-    const timer = setTimeout(() => {
-      priceLinesRef.current.forEach(line => {
-        try { series.removePriceLine(line); } catch (e) { }
-      });
-      priceLinesRef.current = [];
-
-      positions
-        .filter(p => {
-          const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
-          return pSym.toUpperCase() === selectedPair.toUpperCase();
-        })
-        .forEach(p => {
-          const line = series.createPriceLine({
-            price: p.entryPrice,
-            color: p.side === 'long' ? '#10b981' : '#ef4444',
-            lineWidth: 1,
-            lineStyle: 0,
-            axisLabelVisible: true,
-            title: `${p.side.toUpperCase()} ${p.leverage}X`,
-          });
-          priceLinesRef.current.push(line);
-        });
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [positions, selectedPair, timeframe]); // Removed currentPrice
-
-  // Update floating badge coordinates
-  useEffect(() => {
-    const chart = chartRef.current;
-    const series = seriesRef.current;
-    if (!chart || !series) return;
-
-    const updateCoords = () => {
-      const newCoords: Record<string, number> = {};
-      positions.forEach(p => {
-        const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
-        if (pSym.toUpperCase() === selectedPair.toUpperCase()) {
-          const y = series.priceToCoordinate(p.entryPrice);
-          if (y !== null) newCoords[p.id] = y;
-        }
-      });
-      setPosCoords(newCoords);
-    };
-
-    chart.timeScale().subscribeVisibleLogicalRangeChange(updateCoords);
-
-    // Also update when chart is resized
-    const resizeObserver = new ResizeObserver(() => updateCoords());
-    if (chartContainerRef.current) resizeObserver.observe(chartContainerRef.current);
-
-    setTimeout(updateCoords, 150);
-
-    return () => {
-      chart.timeScale().unsubscribeVisibleLogicalRangeChange(updateCoords);
-      resizeObserver.disconnect();
-    };
-  }, [positions, selectedPair, timeframe]); // Removed currentPrice
 
   const handleTrade = () => {
     let qty = parseFloat(amount);
@@ -573,8 +412,8 @@ function TerminalPage() {
                   {selectedPair}USDT
                   <ChevronDown className={`size-3 text-muted-foreground transition-transform ${isMarketSelectorOpen ? 'rotate-180' : ''}`} />
                 </div>
-                                                                                                                              <div className="text-[10px] text-success font-medium flex items-center gap-0.5">
-                                                                                                                                <TrendingUp className="size-2.5" /> +1.24%
+                <div className="text-[10px] text-success font-medium flex items-center gap-0.5">
+                  <TrendingUp className="size-2.5" /> +1.24%
                 </div>
               </div>
             </div>
@@ -658,144 +497,64 @@ function TerminalPage() {
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 text-[11px]">
-                  <span className="text-muted-foreground font-bold mr-2">Thời gian:</span>
-                  {TIMEFRAMES.map((tf) => (
-                    <button
-                      key={tf}
-                      onClick={() => setTimeframe(tf)}
-                      className={`px-2 py-0.5 rounded font-black transition-all ${timeframe === tf ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-secondary"}`}
-                    >
-                      {tf}
-                    </button>
-                  ))}
-                  <div className="h-4 w-px bg-border mx-2" />
-                  <button className="p-1 hover:bg-secondary rounded"><BarChart3 className="size-3.5 text-muted-foreground" /></button>
-                  <button className="p-1 hover:bg-secondary rounded"><Settings className="size-3.5 text-muted-foreground" /></button>
-                  <button className="p-1 hover:bg-secondary rounded ml-auto"><RotateCcw className="size-3.5 text-muted-foreground" /></button>
-                  <button className="p-1 hover:bg-secondary rounded"><Camera className="size-3.5 text-muted-foreground" /></button>
-                </div>
               </div>
 
-              {/* 2. Middle Row: Drawing Sidebar + Chart Area */}
-              <div className="flex-1 flex overflow-hidden min-h-0">
-                {/* Left Drawing Sidebar */}
-                <div className="w-12 border-r bg-[#0B0E11] flex flex-col items-center py-4 gap-4 shrink-0 border-white/5">
-                  <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-primary transition-colors">
-                    <MousePointer2 className="size-4" />
-                  </div>
-                  <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                    <LineChartIcon className="size-4" />
-                  </div>
-                  <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                    <Shapes className="size-4" />
-                  </div>
-                  <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                    <Zap className="size-4" />
-                  </div>
-                  <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                    <Type className="size-4" />
-                  </div>
-                  <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                    <Ruler className="size-4" />
-                  </div>
-                  <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                    <Search className="size-4" />
-                  </div>
 
-                  <div className="h-px w-6 bg-white/5 my-2" />
+              {/* Chart Main Display - UPGRADED TO TRADINGVIEW WIDGET */}
+              <div className="flex-1 relative bg-[#0B0E11] overflow-hidden min-h-0">
+                <TradingViewWidget symbol={tvSymbol} interval={tvInterval} />
 
-                  <div className="mt-auto flex flex-col gap-4">
-                    <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                      <Magnet className="size-4" />
-                    </div>
-                    <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                      <LockIcon className="size-4" />
-                    </div>
-                    <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                      <Eye className="size-4" />
-                    </div>
-                    <div className="p-2 hover:bg-secondary rounded-lg cursor-pointer text-destructive/70 hover:text-destructive transition-colors">
-                      <Trash2 className="size-4" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chart Main Display */}
-                <div className="flex-1 relative bg-[#0B0E11] overflow-hidden">
-                  {/* OHLC Overlay */}
-                  {ohlc && (
-                    <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3 text-[10px] pointer-events-none bg-background/40 backdrop-blur-sm p-1.5 rounded-md border border-white/5">
-                      <span className="text-muted-foreground font-bold">{selectedPair}USDT · {timeframe} · <span className="text-primary font-black">CryptoNest</span></span>
-                      <div className="flex gap-2 font-medium">
-                        <span className="text-muted-foreground">O: <span className="text-foreground tabular-nums">{ohlc.o.toFixed(2)}</span></span>
-                        <span className="text-muted-foreground">H: <span className="text-foreground tabular-nums">{ohlc.h.toFixed(2)}</span></span>
-                        <span className="text-muted-foreground">L: <span className="text-muted-foreground tabular-nums">{ohlc.l.toFixed(2)}</span></span>
-                        <span className="text-muted-foreground">C: <span className={ohlc.c >= ohlc.o ? "text-success" : "text-destructive"}>{ohlc.c.toFixed(2)}</span></span>
-                      </div>
-                    </div>
-                  )}
-                  <div className="w-full h-full pr-1" ref={chartContainerRef} />
-
-                  {/* Floating Position Badges Overlay */}
-                  <div className="absolute inset-0 pointer-events-none z-20">
-                    {positions.filter(p => p.symbol.replace('/', '') === `${selectedPair}USDT`).map(p => {
-                      const y = posCoords[p.id];
-                      if (y === undefined || y < 0) return null;
-                      const pnl = p.side === 'long' ? (currentPrice - p.entryPrice) * p.amount : (p.entryPrice - currentPrice) * p.amount;
+                {/* Fixed Position Banners - pinned at top-right of chart */}
+                {positions.filter(p => {
+                  const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
+                  return pSym.toUpperCase() === selectedPair.toUpperCase();
+                }).length > 0 && (
+                  <div className="absolute top-[50px] right-[60px] z-30 flex flex-col gap-1">
+                    {positions.filter(p => {
+                      const pSym = p.symbol.includes('/') ? p.symbol.split('/')[0] : p.symbol;
+                      return pSym.toUpperCase() === selectedPair.toUpperCase();
+                    }).map(p => {
+                      const pnl = p.side === 'long'
+                        ? (currentPrice - p.entryPrice) * p.amount
+                        : (p.entryPrice - currentPrice) * p.amount;
+                      const pnlPercent = ((pnl / (p.entryPrice * p.amount)) * 100);
+                      const lineColor = p.side === 'long' ? '#22c55e' : '#ef4444';
 
                       return (
-                        <div
-                          key={`badge-${p.id}`}
-                          style={{ top: `${y}px`, transform: 'translateY(-50%)' }}
-                          className="absolute left-4 lg:left-10 flex items-center gap-0 overflow-hidden rounded-[4px] border border-white/10 shadow-2xl transition-all duration-75 pointer-events-auto"
-                        >
-                          <div className="bg-[#1E2329] px-2 py-1 text-[10px] font-black text-muted-foreground border-r border-white/5">
-                            {p.amount.toLocaleString()}
+                        <div key={p.id} className="flex items-stretch rounded-[4px] overflow-hidden shadow-xl border border-white/10">
+                          {/* Color indicator */}
+                          <div className="w-1 shrink-0" style={{ backgroundColor: lineColor }} />
+                          {/* Side & Leverage */}
+                          <div className="px-2 py-1 bg-[#1a1d23] text-[10px] font-black text-white flex items-center gap-1 border-r border-white/10">
+                            {p.side === 'long' ? <TrendingUp className="size-3" style={{ color: lineColor }} /> : <TrendingDown className="size-3" style={{ color: lineColor }} />}
+                            <span style={{ color: lineColor }}>{p.side.toUpperCase()}</span>
+                            <span className="text-muted-foreground">{p.leverage}x</span>
                           </div>
-                          <div className={`px-2 py-1 text-[10px] font-black flex items-center gap-1 ${p.side === 'long' ? 'bg-success/90 text-white' : 'bg-destructive/90 text-white'}`}>
-                            {p.side.toUpperCase()} {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)}
+                          {/* Entry Price */}
+                          <div className="px-2 py-1 bg-[#1a1d23] text-[10px] font-bold text-muted-foreground flex items-center gap-1 border-r border-white/10">
+                            Entry <span className="text-foreground tabular-nums">${p.entryPrice.toLocaleString()}</span>
                           </div>
+                          {/* Qty */}
+                          <div className="px-2 py-1 bg-[#1a1d23] text-[10px] font-bold text-muted-foreground flex items-center gap-1 border-r border-white/10">
+                            Qty <span className="text-foreground tabular-nums">{p.amount.toLocaleString()}</span>
+                          </div>
+                          {/* PnL */}
+                          <div className={`px-2 py-1 bg-[#1a1d23] text-[10px] font-black tabular-nums flex items-center gap-1 border-r border-white/10 ${pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                            {pnl >= 0 ? '+' : ''}{pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            <span className="opacity-70">({pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%)</span>
+                          </div>
+                          {/* Close button */}
                           <button
                             onClick={() => closePosition(p.id, currentPrice)}
-                            className="bg-[#1E2329] px-2 py-1 hover:bg-destructive transition-colors border-l border-white/5"
+                            className="px-2 py-1 bg-[#1a1d23] hover:bg-destructive/80 transition-colors flex items-center"
                           >
-                            <X className="size-3 text-white" />
+                            <X className="size-3 text-muted-foreground hover:text-white" />
                           </button>
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              </div>
-
-              {/* 3. Bottom Row: TradingView Status Bar */}
-              <div className="h-7 bg-[#0B0E11] border-t border-white/5 flex items-center justify-between px-2 shrink-0 text-[10px] text-muted-foreground z-10">
-                <div className="flex items-center gap-4">
-                  <button className="hover:text-foreground transition-colors">
-                    <svg viewBox="0 0 18 18" fill="none" className="size-3.5" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M14 2H4C2.89543 2 2 2.89543 2 4V14C2 15.1046 2.89543 16 4 16H14C15.1046 16 16 15.1046 16 14V4C16 2.89543 15.1046 2 14 2Z" stroke="currentColor" strokeWidth="1.2" />
-                      <path d="M2 6H16" stroke="currentColor" strokeWidth="1.2" />
-                    </svg>
-                  </button>
-                  <span className="font-bold uppercase tracking-tighter opacity-50">Market Open</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 tabular-nums">
-                    <span className="opacity-80 font-medium">{new Date().toLocaleTimeString('vi-VN', { hour12: false })} (UTC+7)</span>
-                    <div className="w-px h-3 bg-white/10 mx-1" />
-                    <button className="px-1 hover:text-foreground uppercase font-bold">ETH</button>
-                    <button className="px-1 hover:text-foreground uppercase font-bold">%</button>
-                    <button className="px-1 hover:text-foreground uppercase font-bold">log</button>
-                    <button
-                      onClick={() => chartRef.current?.timeScale().fitContent()}
-                      className="ml-2 px-2 py-0.5 bg-[#2a2e39] hover:bg-[#363a45] text-foreground rounded-[3px] text-[9px] font-black uppercase transition-all shadow-sm border border-white/5"
-                    >
-                      tự động
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -885,7 +644,7 @@ function TerminalPage() {
 
                           return (
                             <tr key={p.id} className="group hover:bg-white/[0.03] transition-colors relative whitespace-nowrap">
-                              <td 
+                              <td
                                 className="px-4 py-3 relative cursor-pointer group/sym"
                                 onClick={() => setSelectedPair(pSymOnly.toUpperCase())}
                               >
