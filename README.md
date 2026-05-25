@@ -1,133 +1,133 @@
 # CryptoNest Wallet
 
-**CryptoNest Wallet** la mot ung dung vi tien dien tu Web3 duoc xay dung nham phuc vu muc dich hoc tap va nghien cuu trong linh vuc Blockchain. Ung dung cho phep nguoi dung tao vi, quan ly tai san, gui/nhan ETH tren mang Ethereum Sepolia Testnet, swap token, theo doi gia thi truong theo thoi gian thuc, giao dich Futures voi don bay len den 50x, va kham pha NFT — tat ca trong mot giao dien hien dai, toi uu cho thiet bi di dong.
+**CryptoNest Wallet** là một ứng dụng ví tiền điện tử Web3 được xây dựng nhằm phục vụ mục đích học tập và nghiên cứu trong lĩnh vực Blockchain. Ứng dụng cho phép người dùng tạo ví, quản lý tài sản, gửi/nhận ETH trên mạng Ethereum Sepolia Testnet, swap token, theo dõi giá thị trường theo thời gian thực, giao dịch Futures với đòn bẩy lên đến 50x, và khám phá NFT — tất cả trong một giao diện hiện đại, tối ưu cho thiết bị di động.
 
 ---
 
-## Muc luc
+## Mục lục
 
-- [Tong quan du an](#tong-quan-du-an)
-- [Tinh nang chinh](#tinh-nang-chinh)
-- [Kien truc he thong](#kien-truc-he-thong)
-- [Cong nghe su dung](#cong-nghe-su-dung)
-- [Cau truc thu muc](#cau-truc-thu-muc)
-- [Huong dan cai dat](#huong-dan-cai-dat)
-- [Huong dan su dung](#huong-dan-su-dung)
-- [API va du lieu thi truong](#api-va-du-lieu-thi-truong)
-- [Bao mat](#bao-mat)
-- [Gioi han va luu y](#gioi-han-va-luu-y)
-- [Dong gop](#dong-gop)
-- [Giay phep](#giay-phep)
-
----
-
-## Tong quan du an
-
-CryptoNest Wallet la san pham thuoc mon hoc **Lap va Quan ly Du an Cong nghe Thong tin**. Du an mo phong mot vi tien dien tu phi tap trung (non-custodial wallet) tuong tu Phantom, MetaMask, hoac Trust Wallet, ket noi truc tiep voi mang Ethereum Sepolia Testnet de thuc hien cac giao dich thuc tren blockchain.
-
-Ung dung duoc thiet ke theo phong cach mobile-first voi giao dien toi (dark theme), lay cam hung tu cac vi tien dien tu hang dau hien nay.
-
-### Dac diem noi bat
-
-- **Vi thuc (Non-custodial)**: Tao vi bang Ethers.js, sinh Seed Phrase 12 tu va Private Key. Nguoi dung co toan quyen kiem soat khoa rieng cua minh.
-- **Giao dich thuc tren Blockchain**: Gui/nhan ETH tren mang Sepolia Testnet thong qua RPC cong cong, ky giao dich truc tiep tu trinh duyet.
-- **Du lieu thi truong theo thoi gian thuc**: Tich hop CoinGecko API va Binance WebSocket de cap nhat gia cac dong tien dien tu lien tuc.
-- **Giao dich Futures mo phong**: Terminal giao dich chuyen nghiep voi bieu do TradingView, ho tro Long/Short voi don bay tu 1x-50x.
-- **Trien khai tren Cloudflare Workers**: Server-Side Rendering (SSR) tren Cloudflare edge network.
+- [Tổng quan dự án](#tổng-quan-dự-án)
+- [Tính năng chính](#tính-năng-chính)
+- [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
+- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+- [Hướng dẫn cài đặt](#hướng-dẫn-cài-đặt)
+- [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng)
+- [API và dữ liệu thị trường](#api-và-dữ-liệu-thị-trường)
+- [Bảo mật](#bảo-mật)
+- [Giới hạn và lưu ý](#giới-hạn-và-lưu-ý)
+- [Đóng góp](#đóng-góp)
+- [Giấy phép](#giấy-phép)
 
 ---
 
-## Tinh nang chinh
+## Tổng quan dự án
 
-### 1. Quan ly vi (Wallet Management)
+CryptoNest Wallet là sản phẩm thuộc môn học **Lập và Quản lý Dự án Công nghệ Thông tin**. Dự án mô phỏng một ví tiền điện tử phi tập trung (non-custodial wallet) tương tự Phantom, MetaMask, hoặc Trust Wallet, kết nối trực tiếp với mạng Ethereum Sepolia Testnet để thực hiện các giao dịch thực trên blockchain.
 
-- **Tao vi moi**: Sinh ngau nhien vi Ethereum (Seed Phrase 12 tu + Private Key) bang thu vien `ethers.js`.
-- **Nhap vi**: Ho tro nhap vi tu Seed Phrase (12 tu) hoac Private Key co san.
-- **Bao ve bang PIN**: Nguoi dung thiet lap ma PIN 4 so de bao ve vi. Vi tu dong khoa khi tai trang va yeu cau nhap PIN de mo khoa.
-- **Dat ten nguoi dung**: Tao username ngau nhien hoac tu tuy chinh.
-- **Xuat khoa**: Xem lai Seed Phrase hoac Private Key bat ky luc nao tu giao dien.
-- **Dang xuat/Xoa vi**: Xoa toan bo du lieu vi khoi bo nho cuc bo.
+Ứng dụng được thiết kế theo phong cách mobile-first với giao diện tối (dark theme), lấy cảm hứng từ các ví tiền điện tử hàng đầu hiện nay.
 
-### 2. Quan ly tai san (Portfolio)
+### Đặc điểm nổi bật
 
-- **Hien thi so du tong**: Tinh tong gia tri USD cua tat ca tai san (ETH thuc + token ao).
-- **Danh sach token**: Hien thi BTC, ETH, BNB, XRP, SOL, DOGE voi gia thuc tu CoinGecko, va token tuy chinh KCOIN.
-- **Cap nhat so du ETH thuc**: Goi truc tiep den node Sepolia de lay so du on-chain moi nhat cua dia chi vi.
-- **Gia thi truong real-time**: Tu dong cap nhat gia tu CoinGecko API moi 60 giay.
+- **Ví thực (Non-custodial)**: Tạo ví bằng Ethers.js, sinh Seed Phrase 12 từ và Private Key. Người dùng có toàn quyền kiểm soát khoá riêng của mình.
+- **Giao dịch thực trên Blockchain**: Gửi/nhận ETH trên mạng Sepolia Testnet thông qua RPC công cộng, ký giao dịch trực tiếp từ trình duyệt.
+- **Dữ liệu thị trường theo thời gian thực**: Tích hợp CoinGecko API và Binance WebSocket để cập nhật giá các đồng tiền điện tử liên tục.
+- **Giao dịch Futures mô phỏng**: Terminal giao dịch chuyên nghiệp với biểu đồ TradingView, hỗ trợ Long/Short với đòn bẩy từ 1x-50x.
+- **Triển khai trên Cloudflare Workers**: Server-Side Rendering (SSR) trên Cloudflare edge network.
 
-### 3. Gui tien (Send)
+---
 
-- **Gui ETH thuc**: Ky va gui giao dich ETH tren mang Sepolia Testnet. Giao dich duoc phat song len blockchain thuc su.
-- **Gui token ao**: Ho tro gui KCOIN va cac token ao khac (xu ly noi bo).
-- **Hien thi gia tri USD tuong duong**: Tu dong chuyen doi so luong token sang gia tri USD.
-- **Xac nhan tren Etherscan**: Sau khi gui ETH thanh cong, cung cap link truc tiep den Sepolia Etherscan de xac minh giao dich.
+## Tính năng chính
 
-### 4. Nhan tien (Receive)
+### 1. Quản lý ví (Wallet Management)
 
-- **Ma QR**: Sinh ma QR tu dong tu dia chi vi de chia se nhanh.
-- **Sao chep dia chi**: Nut sao chep dia chi vi vao clipboard.
-- **Canh bao mang**: Nhac nho nguoi dung chi gui token tren mang Sepolia Testnet.
-- **Lien ket Faucet**: Lien ket truc tiep den Sepolia Faucet de nhan ETH testnet mien phi.
+- **Tạo ví mới**: Sinh ngẫu nhiên ví Ethereum (Seed Phrase 12 từ + Private Key) bằng thư viện `ethers.js`.
+- **Nhập ví**: Hỗ trợ nhập ví từ Seed Phrase (12 từ) hoặc Private Key có sẵn.
+- **Bảo vệ bằng PIN**: Người dùng thiết lập mã PIN 4 số để bảo vệ ví. Ví tự động khoá khi tải trang và yêu cầu nhập PIN để mở khoá.
+- **Đặt tên người dùng**: Tạo username ngẫu nhiên hoặc tự tuỳ chỉnh.
+- **Xuất khoá**: Xem lại Seed Phrase hoặc Private Key bất kỳ lúc nào từ giao diện.
+- **Đăng xuất / Xoá ví**: Xoá toàn bộ dữ liệu ví khỏi bộ nhớ cục bộ.
+
+### 2. Quản lý tài sản (Portfolio)
+
+- **Hiển thị số dư tổng**: Tính tổng giá trị USD của tất cả tài sản (ETH thực + token ảo).
+- **Danh sách token**: Hiển thị BTC, ETH, BNB, XRP, SOL, DOGE với giá thực từ CoinGecko, và token tuỳ chỉnh KCOIN.
+- **Cập nhật số dư ETH thực**: Gọi trực tiếp đến node Sepolia để lấy số dư on-chain mới nhất của địa chỉ ví.
+- **Giá thị trường real-time**: Tự động cập nhật giá từ CoinGecko API mỗi 60 giây.
+
+### 3. Gửi tiền (Send)
+
+- **Gửi ETH thực**: Ký và gửi giao dịch ETH trên mạng Sepolia Testnet. Giao dịch được phát sóng lên blockchain thực sự.
+- **Gửi token ảo**: Hỗ trợ gửi KCOIN và các token ảo khác (xử lý nội bộ).
+- **Hiển thị giá trị USD tương đương**: Tự động chuyển đổi số lượng token sang giá trị USD.
+- **Xác nhận trên Etherscan**: Sau khi gửi ETH thành công, cung cấp link trực tiếp đến Sepolia Etherscan để xác minh giao dịch.
+
+### 4. Nhận tiền (Receive)
+
+- **Mã QR**: Sinh mã QR tự động từ địa chỉ ví để chia sẻ nhanh.
+- **Sao chép địa chỉ**: Nút sao chép địa chỉ ví vào clipboard.
+- **Cảnh báo mạng**: Nhắc nhở người dùng chỉ gửi token trên mạng Sepolia Testnet.
+- **Liên kết Faucet**: Liên kết trực tiếp đến Sepolia Faucet để nhận ETH testnet miễn phí.
 
 ### 5. Swap token
 
-- **Giao dien swap truc quan**: Chon token nguon va token dich, nhap so luong va swap.
-- **Tinh toan ty gia tu dong**: Chuyen doi gia tri dua tren gia thi truong thuc.
-- **Ho tro nhieu token**: Swap giua ETH, BTC, BNB, SOL, XRP, DOGE, KCOIN va nhieu token khac.
-- **Modal chon token**: Giao dien bottom sheet de chon token voi thong tin gia va so du.
-- **Thong tin xu huong**: Hien thi danh sach token xu huong voi gia va bien dong 24h.
+- **Giao diện swap trực quan**: Chọn token nguồn và token đích, nhập số lượng và swap.
+- **Tính toán tỷ giá tự động**: Chuyển đổi giá trị dựa trên giá thị trường thực.
+- **Hỗ trợ nhiều token**: Swap giữa ETH, BTC, BNB, SOL, XRP, DOGE, KCOIN và nhiều token khác.
+- **Modal chọn token**: Giao diện bottom sheet để chọn token với thông tin giá và số dư.
+- **Thông tin xu hướng**: Hiển thị danh sách token xu hướng với giá và biến động 24h.
 
-### 6. Terminal giao dich Futures
+### 6. Terminal giao dịch Futures
 
-Day la tinh nang noi bat nhat cua CryptoNest, mo phong mot san giao dich phai sinh chuyen nghiep:
+Đây là tính năng nổi bật nhất của CryptoNest, mô phỏng một sàn giao dịch phái sinh chuyên nghiệp:
 
-- **Bieu do TradingView**: Tich hop widget TradingView chinh thuc voi du cac cong cu ve, chi bao ky thuat, va nhieu khung thoi gian (1m, 5m, 15m, 1h, 4h, 1D, 1W).
-- **Gia real-time qua WebSocket**: Ket noi truc tiep den Binance WebSocket Stream (`wss://stream.binance.com`) de nhan gia moi nhat theo thoi gian thuc, voi co che du phong (fallback) goi REST API moi 2 giay.
-- **Giao dich Long/Short**: Mo vi the Long (mua len) hoac Short (ban xuong) voi don bay tu tuy chinh.
-- **Don bay len den 50x**: Chon muc don bay tu 1x den 50x cho moi vi the.
-- **Quan ly vi the**: Xem tat ca cac vi the dang mo voi thong tin chi tiet: gia vao, gia hien tai, gia thanh ly, ky quy, lai/lo (PnL) tinh theo thoi gian thuc.
-- **Dong vi the**: Dong tung vi the hoac dong toan bo cung luc.
-- **Nhieu cap giao dich**: Ho tro BTC, ETH, SOL, BNB, XRP, ADA, AVAX, DOT, LINK, NEAR.
-- **Funding Rate thuc**: Lay ty le funding rate thuc tu Binance Futures API, dem nguoc thoi gian den phien funding tiep theo.
-- **Lich su giao dich**: Luu tru lich su dat lenh, lich su giao dich, va lich su dong von vao localStorage.
-- **Banner vi the tren bieu do**: Hien thi banner vi the dang mo truc tiep tren bieu do voi thong tin lai/lo real-time.
+- **Biểu đồ TradingView**: Tích hợp widget TradingView chính thức với đủ các công cụ vẽ, chỉ báo kỹ thuật, và nhiều khung thời gian (1m, 5m, 15m, 1h, 4h, 1D, 1W).
+- **Giá real-time qua WebSocket**: Kết nối trực tiếp đến Binance WebSocket Stream (`wss://stream.binance.com`) để nhận giá mới nhất theo thời gian thực, với cơ chế dự phòng (fallback) gọi REST API mỗi 2 giây.
+- **Giao dịch Long/Short**: Mở vị thế Long (mua lên) hoặc Short (bán xuống) với đòn bẩy tuỳ chỉnh.
+- **Đòn bẩy lên đến 50x**: Chọn mức đòn bẩy từ 1x đến 50x cho mỗi vị thế.
+- **Quản lý vị thế**: Xem tất cả các vị thế đang mở với thông tin chi tiết: giá vào, giá hiện tại, giá thanh lý, ký quỹ, lãi/lỗ (PnL) tính theo thời gian thực.
+- **Đóng vị thế**: Đóng từng vị thế hoặc đóng toàn bộ cùng lúc.
+- **Nhiều cặp giao dịch**: Hỗ trợ BTC, ETH, SOL, BNB, XRP, ADA, AVAX, DOT, LINK, NEAR.
+- **Funding Rate thực**: Lấy tỷ lệ funding rate thực từ Binance Futures API, đếm ngược thời gian đến phiên funding tiếp theo.
+- **Lịch sử giao dịch**: Lưu trữ lịch sử đặt lệnh, lịch sử giao dịch, và lịch sử dòng vốn vào localStorage.
+- **Banner vị thế trên biểu đồ**: Hiển thị banner vị thế đang mở trực tiếp trên biểu đồ với thông tin lãi/lỗ real-time.
 
-### 7. Lich su giao dich (Activity)
+### 7. Lịch sử giao dịch (Activity)
 
-- **Lich su on-chain**: Goi Etherscan API (V2, chainid Sepolia) de lay lich su giao dich thuc tu blockchain, bao gom ca giao dich internal.
-- **Lich su noi bo**: Ket hop giao dich noi bo (swap, gui token ao) voi giao dich on-chain.
-- **Loai bo trung lap**: Tu dong deduplicate giao dich theo transaction hash.
-- **Phan nhom theo ngay**: Hien thi giao dich theo nhom ngay, sap xep tu moi den cu.
-- **Lien ket Etherscan**: Moi giao dich co the bam vao de xem chi tiet tren Sepolia Etherscan.
+- **Lịch sử on-chain**: Gọi Etherscan API (V2, chainid Sepolia) để lấy lịch sử giao dịch thực từ blockchain, bao gồm cả giao dịch internal.
+- **Lịch sử nội bộ**: Kết hợp giao dịch nội bộ (swap, gửi token ảo) với giao dịch on-chain.
+- **Loại bỏ trùng lặp**: Tự động deduplicate giao dịch theo transaction hash.
+- **Phân nhóm theo ngày**: Hiển thị giao dịch theo nhóm ngày, sắp xếp từ mới đến cũ.
+- **Liên kết Etherscan**: Mỗi giao dịch có thể bấm vào để xem chi tiết trên Sepolia Etherscan.
 
 ### 8. NFT Explorer
 
-- **Tab Collections**: Hien thi cac bo suu tap xu huong va hang dau voi floor price, volume, va bien dong.
-- **Tab Trending**: Danh sach cac bo suu tap dang thong hanh.
-- **Tab Categories**: Phan loai NFT theo the loai: Art, Gaming, PFP, Music.
-- **Tab Marketplace**: Lien ket den cac san NFT: Tensor, Magic Eden, OpenSea, Solanart.
-- **Tab Learn**: Noi dung hoc tap ve NFT: NFT Basics, How to Mint, NFT Security.
+- **Tab Collections**: Hiển thị các bộ sưu tập xu hướng và hàng đầu với floor price, volume, và biến động.
+- **Tab Trending**: Danh sách các bộ sưu tập đang thịnh hành.
+- **Tab Categories**: Phân loại NFT theo thể loại: Art, Gaming, PFP, Music.
+- **Tab Marketplace**: Liên kết đến các sàn NFT: Tensor, Magic Eden, OpenSea, Solanart.
+- **Tab Learn**: Nội dung học tập về NFT: NFT Basics, How to Mint, NFT Security.
 
-### 9. Explore (Kham pha)
+### 9. Khám phá (Explore)
 
-- **Tim kiem**: Thanh tim kiem token va trang web.
-- **Phan loai**: Danh muc nhanh: Tokens, Perps, Lists, Sites.
-- **Trang xu huong**: Hien thi cac trang web DeFi dang thong hanh: Jupiter, pump.fun, Zealy.
-- **Hoc tap**: Noi dung hoc tap ve Liquid Staking, Monad, phuong thuc thanh toan moi.
+- **Tìm kiếm**: Thanh tìm kiếm token và trang web.
+- **Phân loại**: Danh mục nhanh: Tokens, Perps, Lists, Sites.
+- **Trang xu hướng**: Hiển thị các trang web DeFi đang thịnh hành: Jupiter, pump.fun, Zealy.
+- **Học tập**: Nội dung học tập về Liquid Staking, Monad, phương thức thanh toán mới.
 
-### 10. Man hinh khoa (Lock Screen)
+### 10. Màn hình khoá (Lock Screen)
 
-- **Tu dong khoa**: Vi tu dong khoa khi tai lai trang.
-- **Nhap PIN**: Giao dien nhap 4 cham PIN truc quan, tu dong mo khoa khi nhap du.
-- **Dat lai vi**: Tuy chon xoa vi va dat lai neu quen PIN.
+- **Tự động khoá**: Ví tự động khoá khi tải lại trang.
+- **Nhập PIN**: Giao diện nhập 4 chấm PIN trực quan, tự động mở khoá khi nhập đủ.
+- **Đặt lại ví**: Tuỳ chọn xoá ví và đặt lại nếu quên PIN.
 
 ---
 
-## Kien truc he thong
+## Kiến trúc hệ thống
 
 ```
 +-----------------------------------------------------------+
-|                     Trinh duyet (Client)                   |
+|                     Trình duyệt (Client)                   |
 |                                                            |
 |  +-------+  +-------+  +--------+  +--------+  +-------+  |
 |  | Onbo- |  | Port- |  | Send/  |  | Swap   |  | Termi-|  |
@@ -143,7 +143,7 @@ Day la tinh nang noi bat nhat cua CryptoNest, mo phong mot san giao dich phai si
 |       |                    |                    |            |
 |  +---------+      +----------------+    +-------------+     |
 |  | Ethers  |      | CoinGecko API  |    | Binance WS  |     |
-|  | (web3)  |      | (gia token)    |    | (gia RT)    |     |
+|  | (web3)  |      | (giá token)    |    | (giá RT)    |     |
 |  +---------+      +----------------+    +-------------+     |
 |       |                                                     |
 |  +---------+                                                |
@@ -155,130 +155,130 @@ Day la tinh nang noi bat nhat cua CryptoNest, mo phong mot san giao dich phai si
 +-----------------------------------------------------------+
 ```
 
-### Luong du lieu
+### Luồng dữ liệu
 
-1. **Tao vi**: `ethers.Wallet.createRandom()` -> luu vao Zustand store (persist localStorage).
-2. **Lay so du**: `ethers.JsonRpcProvider` goi den Sepolia RPC -> format tu Wei sang ETH.
-3. **Gui ETH**: `ethers.Wallet.sendTransaction()` -> ky va phat giao dich len Sepolia.
-4. **Gia token**: CoinGecko REST API moi 60 giay + Binance WebSocket cho gia real-time.
-5. **Futures**: Mo/dong vi the trong Zustand store, tinh PnL dua tren gia hien tai tu WebSocket.
+1. **Tạo ví**: `ethers.Wallet.createRandom()` -> lưu vào Zustand store (persist localStorage).
+2. **Lấy số dư**: `ethers.JsonRpcProvider` gọi đến Sepolia RPC -> format từ Wei sang ETH.
+3. **Gửi ETH**: `ethers.Wallet.sendTransaction()` -> ký và phát giao dịch lên Sepolia.
+4. **Giá token**: CoinGecko REST API mỗi 60 giây + Binance WebSocket cho giá real-time.
+5. **Futures**: Mở/đóng vị thế trong Zustand store, tính PnL dựa trên giá hiện tại từ WebSocket.
 
 ---
 
-## Cong nghe su dung
+## Công nghệ sử dụng
 
 ### Frontend
 
-| Cong nghe | Phien ban | Muc dich |
+| Công nghệ | Phiên bản | Mục đích |
 |-----------|-----------|----------|
-| React | 19.2 | Thu vien UI chinh |
-| TypeScript | 5.8 | Ngon ngu lap trinh |
-| TanStack Router | 1.168 | Dinh tuyen phia client va server |
+| React | 19.2 | Thư viện UI chính |
+| TypeScript | 5.8 | Ngôn ngữ lập trình |
+| TanStack Router | 1.168 | Định tuyến phía client và server |
 | TanStack Start | 1.167 | Framework full-stack (SSR) |
-| TanStack React Query | 5.83 | Quan ly trang thai server |
-| Zustand | 5.0 | Quan ly trang thai toan cuc |
+| TanStack React Query | 5.83 | Quản lý trạng thái server |
+| Zustand | 5.0 | Quản lý trạng thái toàn cục |
 | Tailwind CSS | 4.2 | Framework CSS utility-first |
-| Radix UI | Nhieu | Thu vien component headless (46 component) |
-| shadcn/ui | New York style | He thong component UI xay dung tren Radix |
-| Lucide React | 0.575 | Thu vien icon |
-| Recharts | 2.15 | Bieu do va do thi |
-| Sonner | 2.0 | He thong thong bao toast |
+| Radix UI | Nhiều | Thư viện component headless (46 component) |
+| shadcn/ui | New York style | Hệ thống component UI xây dựng trên Radix |
+| Lucide React | 0.575 | Thư viện icon |
+| Recharts | 2.15 | Biểu đồ và đồ thị |
+| Sonner | 2.0 | Hệ thống thông báo toast |
 | Vaul | 1.1 | Component Drawer |
 
-### Web3 va Blockchain
+### Web3 và Blockchain
 
-| Cong nghe | Phien ban | Muc dich |
+| Công nghệ | Phiên bản | Mục đích |
 |-----------|-----------|----------|
-| ethers.js | 6.16 | Tuong tac blockchain Ethereum |
-| Sepolia Testnet | - | Mang test Ethereum |
-| PublicNode RPC | - | Node RPC cong cong cho Sepolia |
+| ethers.js | 6.16 | Tương tác blockchain Ethereum |
+| Sepolia Testnet | - | Mạng test Ethereum |
+| PublicNode RPC | - | Node RPC công cộng cho Sepolia |
 
-### API ben ngoai
+### API bên ngoài
 
-| API | Muc dich |
+| API | Mục đích |
 |-----|----------|
-| CoinGecko API | Lay gia token (BTC, ETH, BNB, XRP, SOL, DOGE) |
-| Binance WebSocket | Nhan gia real-time cho terminal giao dich |
-| Binance Futures API | Lay funding rate thuc |
-| Etherscan API V2 | Lay lich su giao dich on-chain (Sepolia) |
-| QR Server API | Sinh ma QR cho dia chi vi |
-| TradingView Widget | Bieu do giao dich chuyen nghiep |
+| CoinGecko API | Lấy giá token (BTC, ETH, BNB, XRP, SOL, DOGE) |
+| Binance WebSocket | Nhận giá real-time cho terminal giao dịch |
+| Binance Futures API | Lấy funding rate thực |
+| Etherscan API V2 | Lấy lịch sử giao dịch on-chain (Sepolia) |
+| QR Server API | Sinh mã QR cho địa chỉ ví |
+| TradingView Widget | Biểu đồ giao dịch chuyên nghiệp |
 
-### Build va Deployment
+### Build và Deployment
 
-| Cong nghe | Phien ban | Muc dich |
+| Công nghệ | Phiên bản | Mục đích |
 |-----------|-----------|----------|
-| Vite | 7.3 | Build tool va dev server |
-| Cloudflare Workers | - | Nen tang trien khai (SSR edge) |
-| Wrangler | - | CLI quan ly Cloudflare Workers |
-| ESLint | 9.32 | Kiem tra chat luong code |
-| Prettier | 3.7 | Dinh dang code tu dong |
+| Vite | 7.3 | Build tool và dev server |
+| Cloudflare Workers | - | Nền tảng triển khai (SSR edge) |
+| Wrangler | - | CLI quản lý Cloudflare Workers |
+| ESLint | 9.32 | Kiểm tra chất lượng code |
+| Prettier | 3.7 | Định dạng code tự động |
 
 ---
 
-## Cau truc thu muc
+## Cấu trúc thư mục
 
 ```
 CryptoNest Wallet/
 |
-|-- public/                     # Tai nguyen tinh
-|-- img/                        # Hinh anh token (BTC, ETH, BNB, SOL, XRP, DOGE, KCOIN)
+|-- public/                     # Tài nguyên tĩnh
+|-- img/                        # Hình ảnh token (BTC, ETH, BNB, SOL, XRP, DOGE, KCOIN)
 |-- src/
-|   |-- assets/                 # Tai nguyen duoc import (logo)
+|   |-- assets/                 # Tài nguyên được import (logo)
 |   |-- components/
 |   |   |-- ui/                 # 46 component shadcn/ui (Button, Card, Dialog, ...)
-|   |   |-- onboarding-view.tsx # Man hinh gioi thieu va tao vi
-|   |   |-- portfolio-view.tsx  # Giao dien portfolio chinh
-|   |   |-- wallet-shell.tsx    # Layout bao boc (header, nav, auth guard)
-|   |   |-- lock-screen.tsx     # Man hinh khoa PIN
+|   |   |-- onboarding-view.tsx # Màn hình giới thiệu và tạo ví
+|   |   |-- portfolio-view.tsx  # Giao diện portfolio chính
+|   |   |-- wallet-shell.tsx    # Layout bao bọc (header, nav, auth guard)
+|   |   |-- lock-screen.tsx     # Màn hình khoá PIN
 |   |-- hooks/
-|   |   |-- use-mobile.tsx      # Hook phat hien thiet bi di dong
+|   |   |-- use-mobile.tsx      # Hook phát hiện thiết bị di động
 |   |-- lib/
-|   |   |-- wallet-data.ts      # Dinh nghia Token, Tx, du lieu token mac dinh
-|   |   |-- web3.ts             # Ket noi Sepolia RPC, gui giao dich ETH
-|   |   |-- utils.ts            # Ham tien ich (cn - class name merge)
-|   |   |-- error-capture.ts    # Bat loi phia server
-|   |   |-- error-page.ts       # Trang loi HTML
+|   |   |-- wallet-data.ts      # Định nghĩa Token, Tx, dữ liệu token mặc định
+|   |   |-- web3.ts             # Kết nối Sepolia RPC, gửi giao dịch ETH
+|   |   |-- utils.ts            # Hàm tiện ích (cn - class name merge)
+|   |   |-- error-capture.ts    # Bắt lỗi phía server
+|   |   |-- error-page.ts       # Trang lỗi HTML
 |   |-- routes/
-|   |   |-- __root.tsx          # Layout goc (HTML shell, meta tags, providers)
-|   |   |-- index.tsx           # Trang chu (Portfolio)
-|   |   |-- send-select.tsx     # Chon token de gui
-|   |   |-- send.tsx            # Gui token/ETH
-|   |   |-- receive.tsx         # Nhan token (QR code)
+|   |   |-- __root.tsx          # Layout gốc (HTML shell, meta tags, providers)
+|   |   |-- index.tsx           # Trang chủ (Portfolio)
+|   |   |-- send-select.tsx     # Chọn token để gửi
+|   |   |-- send.tsx            # Gửi token/ETH
+|   |   |-- receive.tsx         # Nhận token (QR code)
 |   |   |-- swap.tsx            # Swap token
-|   |   |-- terminal.tsx        # Terminal giao dich Futures
-|   |   |-- activity.tsx        # Lich su giao dich
-|   |   |-- explore.tsx         # Kham pha DeFi
+|   |   |-- terminal.tsx        # Terminal giao dịch Futures
+|   |   |-- activity.tsx        # Lịch sử giao dịch
+|   |   |-- explore.tsx         # Khám phá DeFi
 |   |   |-- nft.tsx             # NFT Explorer
-|   |   |-- nfts.tsx            # Bo suu tap NFT
+|   |   |-- nfts.tsx            # Bộ sưu tập NFT
 |   |   |-- buy.tsx             # Mua token
 |   |-- store/
-|   |   |-- wallet-store.ts     # Zustand store (trang thai toan cuc)
-|   |-- router.tsx              # Cau hinh router
+|   |   |-- wallet-store.ts     # Zustand store (trạng thái toàn cục)
+|   |-- router.tsx              # Cấu hình router
 |   |-- server.ts               # Entry point SSR (Cloudflare Workers)
-|   |-- start.ts                # Diem khoi dong ung dung
-|   |-- styles.css              # CSS toan cuc va Tailwind
-|   |-- routeTree.gen.ts        # Route tree tu dong sinh boi TanStack Router
+|   |-- start.ts                # Điểm khởi động ứng dụng
+|   |-- styles.css              # CSS toàn cục và Tailwind
+|   |-- routeTree.gen.ts        # Route tree tự động sinh bởi TanStack Router
 |
-|-- components.json             # Cau hinh shadcn/ui
-|-- package.json                # Dependencies va scripts
-|-- tsconfig.json               # Cau hinh TypeScript
-|-- vite.config.ts              # Cau hinh Vite + TanStack + Cloudflare
-|-- wrangler.jsonc              # Cau hinh Cloudflare Workers
-|-- eslint.config.js            # Cau hinh ESLint
-|-- .prettierrc                 # Cau hinh Prettier
+|-- components.json             # Cấu hình shadcn/ui
+|-- package.json                # Dependencies và scripts
+|-- tsconfig.json               # Cấu hình TypeScript
+|-- vite.config.ts              # Cấu hình Vite + TanStack + Cloudflare
+|-- wrangler.jsonc              # Cấu hình Cloudflare Workers
+|-- eslint.config.js            # Cấu hình ESLint
+|-- .prettierrc                 # Cấu hình Prettier
 ```
 
 ---
 
-## Huong dan cai dat
+## Hướng dẫn cài đặt
 
-### Yeu cau he thong
+### Yêu cầu hệ thống
 
-- **Node.js**: Phien ban 18.0 tro len
-- **npm** hoac **bun**: Trinh quan ly goi
+- **Node.js**: Phiên bản 18.0 trở lên
+- **npm** hoặc **bun**: Trình quản lý gói
 
-### Cac buoc cai dat
+### Các bước cài đặt
 
 1. **Clone repository**
 
@@ -287,25 +287,25 @@ git clone https://github.com/lightning09512/CryptoNest-Wallet.git
 cd CryptoNest-Wallet
 ```
 
-2. **Cai dat dependencies**
+2. **Cài đặt dependencies**
 
 ```bash
 npm install
 ```
 
-Hoac su dung Bun:
+Hoặc sử dụng Bun:
 
 ```bash
 bun install
 ```
 
-3. **Chay moi truong phat trien**
+3. **Chạy môi trường phát triển**
 
 ```bash
 npm run dev
 ```
 
-Ung dung se khoi dong tai `http://localhost:5173` (hoac port khac neu 5173 da duoc su dung).
+Ứng dụng sẽ khởi động tại `http://localhost:5173` (hoặc port khác nếu 5173 đã được sử dụng).
 
 4. **Build production**
 
@@ -313,153 +313,153 @@ Ung dung se khoi dong tai `http://localhost:5173` (hoac port khac neu 5173 da du
 npm run build
 ```
 
-5. **Xem truoc ban build**
+5. **Xem trước bản build**
 
 ```bash
 npm run preview
 ```
 
-### Scripts co san
+### Scripts có sẵn
 
-| Lenh | Mo ta |
+| Lệnh | Mô tả |
 |------|-------|
-| `npm run dev` | Khoi dong dev server voi hot reload |
+| `npm run dev` | Khởi động dev server với hot reload |
 | `npm run build` | Build production |
 | `npm run build:dev` | Build development mode |
-| `npm run preview` | Xem truoc ban build production |
-| `npm run lint` | Kiem tra code voi ESLint |
-| `npm run format` | Dinh dang code voi Prettier |
+| `npm run preview` | Xem trước bản build production |
+| `npm run lint` | Kiểm tra code với ESLint |
+| `npm run format` | Định dạng code với Prettier |
 
 ---
 
-## Huong dan su dung
+## Hướng dẫn sử dụng
 
-### Tao vi moi
+### Tạo ví mới
 
-1. Mo ung dung tai `http://localhost:5173`.
-2. Bam nut **"Create a new wallet"**.
-3. Nhap ma PIN 4 so (dung de bao ve vi).
-4. Tuy chinh username hoac giu mac dinh.
-5. **Ghi lai Seed Phrase 12 tu** — day la cach duy nhat de khoi phuc vi.
-6. Bam **"I Saved It"** roi bam **"Get Started"**.
+1. Mở ứng dụng tại `http://localhost:5173`.
+2. Bấm nút **"Create a new wallet"**.
+3. Nhập mã PIN 4 số (dùng để bảo vệ ví).
+4. Tuỳ chỉnh username hoặc giữ mặc định.
+5. **Ghi lại Seed Phrase 12 từ** — đây là cách duy nhất để khôi phục ví.
+6. Bấm **"I Saved It"** rồi bấm **"Get Started"**.
 
-### Nhap vi co san
+### Nhập ví có sẵn
 
-1. Bam **"I already have a wallet"**.
-2. Nhap 12 tu Seed Phrase vao cac o tuong ung (ho tro paste tat ca cung luc).
-3. Thiet lap PIN va username.
+1. Bấm **"I already have a wallet"**.
+2. Nhập 12 từ Seed Phrase vào các ô tương ứng (hỗ trợ paste tất cả cùng lúc).
+3. Thiết lập PIN và username.
 
-### Nhan ETH testnet mien phi
+### Nhận ETH testnet miễn phí
 
-1. Tu trang Portfolio, bam **"Get Testnet ETH"** de truy cap Sepolia Faucet.
-2. Hoac vao trang `/receive` de sao chep dia chi vi.
-3. Dan dia chi vao Sepolia Faucet (sepoliafaucet.com) de nhan ETH mien phi.
+1. Từ trang Portfolio, bấm **"Get Testnet ETH"** để truy cập Sepolia Faucet.
+2. Hoặc vào trang `/receive` để sao chép địa chỉ ví.
+3. Dán địa chỉ vào Sepolia Faucet (sepoliafaucet.com) để nhận ETH miễn phí.
 
-### Gui ETH
+### Gửi ETH
 
-1. Bam nut **Send** tu trang Portfolio.
-2. Chon token can gui (ETH hoac KCOIN).
-3. Nhap dia chi nguoi nhan va so luong.
-4. Bam **"Confirm Send"** — giao dich se duoc ky va gui len blockchain Sepolia.
+1. Bấm nút **Send** từ trang Portfolio.
+2. Chọn token cần gửi (ETH hoặc KCOIN).
+3. Nhập địa chỉ người nhận và số lượng.
+4. Bấm **"Confirm Send"** — giao dịch sẽ được ký và gửi lên blockchain Sepolia.
 
-### Su dung Terminal giao dich
+### Sử dụng Terminal giao dịch
 
-1. Tu trang Portfolio, bam vao banner **"Meet Phantom Terminal"**.
-2. Chon cap giao dich (VD: ETHUSDT, BTCUSDT).
-3. Chon **Long** (mua len) hoac **Short** (ban xuong).
-4. Nhap so luong va dieu chinh don bay (1x-50x).
-5. Bam nut dat lenh. Vi the se hien thi trong bang phia duoi voi PnL cap nhat theo thoi gian thuc.
-6. Bam **"Dong"** de dong vi the va tinh lai/lo.
+1. Từ trang Portfolio, bấm vào banner **"Meet Phantom Terminal"**.
+2. Chọn cặp giao dịch (VD: ETHUSDT, BTCUSDT).
+3. Chọn **Long** (mua lên) hoặc **Short** (bán xuống).
+4. Nhập số lượng và điều chỉnh đòn bẩy (1x-50x).
+5. Bấm nút đặt lệnh. Vị thế sẽ hiển thị trong bảng phía dưới với PnL cập nhật theo thời gian thực.
+6. Bấm **"Đóng"** để đóng vị thế và tính lãi/lỗ.
 
 ---
 
-## API va du lieu thi truong
+## API và dữ liệu thị trường
 
 ### CoinGecko API
 
 - **Endpoint**: `https://api.coingecko.com/api/v3/simple/price`
-- **Du lieu**: Gia USD va bien dong 24h cua BTC, ETH, BNB, XRP, SOL, DOGE.
-- **Tan suat**: Cap nhat moi 60 giay.
-- **Gioi han**: API mien phi co gioi han so luong request.
+- **Dữ liệu**: Giá USD và biến động 24h của BTC, ETH, BNB, XRP, SOL, DOGE.
+- **Tần suất**: Cập nhật mỗi 60 giây.
+- **Giới hạn**: API miễn phí có giới hạn số lượng request.
 
 ### Binance WebSocket
 
 - **Endpoint**: `wss://stream.binance.com:9443/ws/{symbol}@ticker`
-- **Du lieu**: Gia real-time cua cap giao dich (VD: ethusdt, btcusdt).
-- **Du phong**: Neu WebSocket that bai, tu dong chuyen sang REST API (`api.binance.com`) moi 2 giay.
+- **Dữ liệu**: Giá real-time của cặp giao dịch (VD: ethusdt, btcusdt).
+- **Dự phòng**: Nếu WebSocket thất bại, tự động chuyển sang REST API (`api.binance.com`) mỗi 2 giây.
 
 ### Binance Futures API
 
 - **Endpoint**: `https://fapi.binance.com/fapi/v1/premiumIndex`
-- **Du lieu**: Ty le funding rate thuc te cho cac cap giao dich futures.
-- **Tan suat**: Cap nhat moi 60 giay.
+- **Dữ liệu**: Tỷ lệ funding rate thực tế cho các cặp giao dịch futures.
+- **Tần suất**: Cập nhật mỗi 60 giây.
 
 ### Etherscan API V2
 
 - **Endpoint**: `https://api.etherscan.io/v2/api`
 - **Chain ID**: 11155111 (Sepolia)
-- **Du lieu**: Lich su giao dich (normal + internal transactions).
-- **Luu y**: Su dung API key. Lich su giao dich gioi han 50 giao dich gan nhat.
+- **Dữ liệu**: Lịch sử giao dịch (normal + internal transactions).
+- **Lưu ý**: Sử dụng API key. Lịch sử giao dịch giới hạn 50 giao dịch gần nhất.
 
 ### Sepolia RPC
 
 - **Endpoint**: `https://ethereum-sepolia-rpc.publicnode.com`
-- **Muc dich**: Lay so du vi, gui giao dich ETH.
-- **Thu vien**: ethers.js `JsonRpcProvider`.
+- **Mục đích**: Lấy số dư ví, gửi giao dịch ETH.
+- **Thư viện**: ethers.js `JsonRpcProvider`.
 
 ---
 
-## Bao mat
+## Bảo mật
 
-### Luu tru du lieu
+### Lưu trữ dữ liệu
 
-- **Private Key va Seed Phrase** duoc luu trong `localStorage` cua trinh duyet thong qua Zustand persist middleware.
-- **Ma PIN** cung duoc luu trong localStorage de xac thuc khi mo khoa.
-- **Khong co backend**: Toan bo du lieu vi luu tru phia client, khong duoc gui len bat ky server nao.
+- **Private Key và Seed Phrase** được lưu trong `localStorage` của trình duyệt thông qua Zustand persist middleware.
+- **Mã PIN** cũng được lưu trong localStorage để xác thực khi mở khoá.
+- **Không có backend**: Toàn bộ dữ liệu ví lưu trữ phía client, không được gửi lên bất kỳ server nào.
 
-### Canh bao bao mat
+### Cảnh báo bảo mật
 
-- Du an nay chi phuc vu muc dich **hoc tap va nghien cuu**. **KHONG** su dung cho vi chua tai san thuc tren mainnet.
-- Viec luu Private Key trong localStorage khong an toan cho moi truong production. Cac vi tien dien tu thuc su dung cac phuong phap ma hoa tien tien hon (Secure Enclave, hardware wallet, encrypted keystore).
-- Khong chia se Seed Phrase hoac Private Key voi bat ky ai.
-
----
-
-## Gioi han va luu y
-
-1. **Chi ho tro Sepolia Testnet**: Ung dung chi tuong tac voi mang Ethereum Sepolia. Khong gui tai san thuc (mainnet) den dia chi trong ung dung.
-2. **Swap mo phong**: Chuc nang swap khong tuong tac voi smart contract thuc (ngoai tru ETH). Token ao (KCOIN, BTC, BNB, ...) chi xu ly noi bo trong store.
-3. **Futures mo phong**: Giao dich futures khong tuong tac voi san giao dich thuc. So du giao dich ($10,000 mac dinh) la tai khoan ao.
-4. **NFT mo phong**: Du lieu NFT la mock data, khong lay tu blockchain thuc.
-5. **Gia token hien thi**: Gia BTC, ETH, BNB, SOL, XRP, DOGE la gia thuc tu CoinGecko/Binance. Cac token khac hien thi gia mac dinh.
-6. **Khong ho tro da mang**: Hien tai chi ho tro mang Sepolia, chua ho tro chuyen doi giua cac mang khac (Mainnet, Goerli, BSC, ...).
+- Dự án này chỉ phục vụ mục đích **học tập và nghiên cứu**. **KHÔNG** sử dụng cho ví chứa tài sản thực trên mainnet.
+- Việc lưu Private Key trong localStorage không an toàn cho môi trường production. Các ví tiền điện tử thực sử dụng các phương pháp mã hoá tiên tiến hơn (Secure Enclave, hardware wallet, encrypted keystore).
+- Không chia sẻ Seed Phrase hoặc Private Key với bất kỳ ai.
 
 ---
 
-## Dong gop
+## Giới hạn và lưu ý
+
+1. **Chỉ hỗ trợ Sepolia Testnet**: Ứng dụng chỉ tương tác với mạng Ethereum Sepolia. Không gửi tài sản thực (mainnet) đến địa chỉ trong ứng dụng.
+2. **Swap mô phỏng**: Chức năng swap không tương tác với smart contract thực (ngoại trừ ETH). Token ảo (KCOIN, BTC, BNB, ...) chỉ xử lý nội bộ trong store.
+3. **Futures mô phỏng**: Giao dịch futures không tương tác với sàn giao dịch thực. Số dư giao dịch ($10,000 mặc định) là tài khoản ảo.
+4. **NFT mô phỏng**: Dữ liệu NFT là mock data, không lấy từ blockchain thực.
+5. **Giá token hiển thị**: Giá BTC, ETH, BNB, SOL, XRP, DOGE là giá thực từ CoinGecko/Binance. Các token khác hiển thị giá mặc định.
+6. **Không hỗ trợ đa mạng**: Hiện tại chỉ hỗ trợ mạng Sepolia, chưa hỗ trợ chuyển đổi giữa các mạng khác (Mainnet, Goerli, BSC, ...).
+
+---
+
+## Đóng góp
 
 1. Fork repository.
-2. Tao branch moi: `git checkout -b feature/ten-tinh-nang`.
-3. Commit thay doi: `git commit -m "Mo ta thay doi"`.
-4. Push len branch: `git push origin feature/ten-tinh-nang`.
-5. Tao Pull Request.
+2. Tạo branch mới: `git checkout -b feature/ten-tinh-nang`.
+3. Commit thay đổi: `git commit -m "Mô tả thay đổi"`.
+4. Push lên branch: `git push origin feature/ten-tinh-nang`.
+5. Tạo Pull Request.
 
-### Quy tac code
+### Quy tắc code
 
-- Su dung TypeScript strict mode.
-- Tuan thu ESLint va Prettier config cua du an.
-- Dat ten component bang PascalCase, dat ten file bang kebab-case.
-- Su dung path alias `@/` cho tat ca import tu thu muc `src/`.
-
----
-
-## Giay phep
-
-Du an nay duoc phat trien cho muc dich hoc tap trong khuon kho mon hoc **Lap va Quan ly Du an Cong nghe Thong tin**.
+- Sử dụng TypeScript strict mode.
+- Tuân thủ ESLint và Prettier config của dự án.
+- Đặt tên component bằng PascalCase, đặt tên file bằng kebab-case.
+- Sử dụng path alias `@/` cho tất cả import từ thư mục `src/`.
 
 ---
 
-## Thong tin lien he
+## Giấy phép
 
-- **Du an**: CryptoNest Wallet
+Dự án này được phát triển cho mục đích học tập trong khuôn khổ môn học **Lập và Quản lý Dự án Công nghệ Thông tin**.
+
+---
+
+## Thông tin liên hệ
+
+- **Dự án**: CryptoNest Wallet
 - **Repository**: [github.com/lightning09512/CryptoNest-Wallet](https://github.com/lightning09512/CryptoNest-Wallet)
