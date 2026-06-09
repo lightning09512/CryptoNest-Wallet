@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Search, Circle, Infinity, Layers, Globe } from "lucide-react";
+import { Search, Circle, Infinity as InfinityIcon, Layers, Globe } from "lucide-react";
 import { useRef, useState } from "react";
 import { WalletShell } from "@/components/wallet-shell";
 
@@ -41,7 +41,7 @@ function ExplorePage() {
   // Categories data
   const categories = [
     { id: "tokens", label: "Tokens", icon: Circle, color: "#2E8B57", bgColor: "#1E3B2D" }, // Greenish
-    { id: "perps", label: "Perps", icon: Infinity, color: "#000", bgColor: "#FFC0CB" }, // Pinkish
+    { id: "perps", label: "Perps", icon: InfinityIcon, color: "#000", bgColor: "#FFC0CB" }, // Pinkish
     { id: "lists", label: "Lists", icon: Layers, color: "#000", bgColor: "#B19CD9" }, // Purple
     { id: "sites", label: "Sites", icon: Globe, color: "#fff", bgColor: "#4169E1" }, // Blue
   ];

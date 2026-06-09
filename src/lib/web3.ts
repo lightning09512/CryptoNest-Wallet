@@ -50,11 +50,11 @@ export const sendSepoliaETH = async (privateKey: string, toAddress: string, amou
       hash: transactionResponse.hash,
       response: transactionResponse,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error sending transaction:", error);
     return {
       success: false,
-      error: error.message || "An unknown error occurred",
+      error: error instanceof Error ? error.message : "An unknown error occurred",
     };
   }
 };

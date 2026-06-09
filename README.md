@@ -169,50 +169,50 @@ CryptoNest Wallet là sản phẩm thuộc môn học **Lập và Quản lý D�
 
 ### Frontend
 
-| Công nghệ | Phiên bản | Mục đích |
-|-----------|-----------|----------|
-| React | 19.2 | Thư viện UI chính |
-| TypeScript | 5.8 | Ngôn ngữ lập trình |
-| TanStack Router | 1.168 | Định tuyến phía client và server |
-| TanStack Start | 1.167 | Framework full-stack (SSR) |
-| TanStack React Query | 5.83 | Quản lý trạng thái server |
-| Zustand | 5.0 | Quản lý trạng thái toàn cục |
-| Tailwind CSS | 4.2 | Framework CSS utility-first |
-| Radix UI | Nhiều | Thư viện component headless (46 component) |
-| shadcn/ui | New York style | Hệ thống component UI xây dựng trên Radix |
-| Lucide React | 0.575 | Thư viện icon |
-| Recharts | 2.15 | Biểu đồ và đồ thị |
-| Sonner | 2.0 | Hệ thống thông báo toast |
-| Vaul | 1.1 | Component Drawer |
+| Công nghệ            | Phiên bản      | Mục đích                                   |
+| -------------------- | -------------- | ------------------------------------------ |
+| React                | 19.2           | Thư viện UI chính                          |
+| TypeScript           | 5.8            | Ngôn ngữ lập trình                         |
+| TanStack Router      | 1.168          | Định tuyến phía client và server           |
+| TanStack Start       | 1.167          | Framework full-stack (SSR)                 |
+| TanStack React Query | 5.83           | Quản lý trạng thái server                  |
+| Zustand              | 5.0            | Quản lý trạng thái toàn cục                |
+| Tailwind CSS         | 4.2            | Framework CSS utility-first                |
+| Radix UI             | Nhiều          | Thư viện component headless (46 component) |
+| shadcn/ui            | New York style | Hệ thống component UI xây dựng trên Radix  |
+| Lucide React         | 0.575          | Thư viện icon                              |
+| Recharts             | 2.15           | Biểu đồ và đồ thị                          |
+| Sonner               | 2.0            | Hệ thống thông báo toast                   |
+| Vaul                 | 1.1            | Component Drawer                           |
 
 ### Web3 và Blockchain
 
-| Công nghệ | Phiên bản | Mục đích |
-|-----------|-----------|----------|
-| ethers.js | 6.16 | Tương tác blockchain Ethereum |
-| Sepolia Testnet | - | Mạng test Ethereum |
-| PublicNode RPC | - | Node RPC công cộng cho Sepolia |
+| Công nghệ       | Phiên bản | Mục đích                       |
+| --------------- | --------- | ------------------------------ |
+| ethers.js       | 6.16      | Tương tác blockchain Ethereum  |
+| Sepolia Testnet | -         | Mạng test Ethereum             |
+| PublicNode RPC  | -         | Node RPC công cộng cho Sepolia |
 
 ### API bên ngoài
 
-| API | Mục đích |
-|-----|----------|
-| CoinGecko API | Lấy giá token (BTC, ETH, BNB, XRP, SOL, DOGE) |
-| Binance WebSocket | Nhận giá real-time cho terminal giao dịch |
-| Binance Futures API | Lấy funding rate thực |
-| Etherscan API V2 | Lấy lịch sử giao dịch on-chain (Sepolia) |
-| QR Server API | Sinh mã QR cho địa chỉ ví |
-| TradingView Widget | Biểu đồ giao dịch chuyên nghiệp |
+| API                 | Mục đích                                      |
+| ------------------- | --------------------------------------------- |
+| CoinGecko API       | Lấy giá token (BTC, ETH, BNB, XRP, SOL, DOGE) |
+| Binance WebSocket   | Nhận giá real-time cho terminal giao dịch     |
+| Binance Futures API | Lấy funding rate thực                         |
+| Etherscan API V2    | Lấy lịch sử giao dịch on-chain (Sepolia)      |
+| QR Server API       | Sinh mã QR cho địa chỉ ví                     |
+| TradingView Widget  | Biểu đồ giao dịch chuyên nghiệp               |
 
 ### Build và Deployment
 
-| Công nghệ | Phiên bản | Mục đích |
-|-----------|-----------|----------|
-| Vite | 7.3 | Build tool và dev server |
-| Cloudflare Workers | - | Nền tảng triển khai (SSR edge) |
-| Wrangler | - | CLI quản lý Cloudflare Workers |
-| ESLint | 9.32 | Kiểm tra chất lượng code |
-| Prettier | 3.7 | Định dạng code tự động |
+| Công nghệ          | Phiên bản | Mục đích                       |
+| ------------------ | --------- | ------------------------------ |
+| Vite               | 7.3       | Build tool và dev server       |
+| Cloudflare Workers | -         | Nền tảng triển khai (SSR edge) |
+| Wrangler           | -         | CLI quản lý Cloudflare Workers |
+| ESLint             | 9.32      | Kiểm tra chất lượng code       |
+| Prettier           | 3.7       | Định dạng code tự động         |
 
 ---
 
@@ -321,14 +321,14 @@ npm run preview
 
 ### Scripts có sẵn
 
-| Lệnh | Mô tả |
-|------|-------|
-| `npm run dev` | Khởi động dev server với hot reload |
-| `npm run build` | Build production |
-| `npm run build:dev` | Build development mode |
-| `npm run preview` | Xem trước bản build production |
-| `npm run lint` | Kiểm tra code với ESLint |
-| `npm run format` | Định dạng code với Prettier |
+| Lệnh                | Mô tả                               |
+| ------------------- | ----------------------------------- |
+| `npm run dev`       | Khởi động dev server với hot reload |
+| `npm run build`     | Build production                    |
+| `npm run build:dev` | Build development mode              |
+| `npm run preview`   | Xem trước bản build production      |
+| `npm run lint`      | Kiểm tra code với ESLint            |
+| `npm run format`    | Định dạng code với Prettier         |
 
 ---
 

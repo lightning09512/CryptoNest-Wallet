@@ -96,49 +96,49 @@ export function WalletShell({
         {/* Header */}
         {!hideHeader && (
           <header className="flex items-center justify-between px-4 py-3 sticky top-0 z-50 bg-background/80 backdrop-blur-md">
-          <button
-            onClick={copy}
-            className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-left"
-          >
-            <span className="size-9 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center overflow-hidden">
-              <img src={ghostLogo} alt="" width={28} height={28} className="size-7" />
-            </span>
-            <div className="leading-tight">
-              <div className="text-xs text-muted-foreground font-medium">
-                {username || "Sepolia Wallet"}
+            <button
+              onClick={copy}
+              className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-left"
+            >
+              <span className="size-9 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center overflow-hidden">
+                <img src={ghostLogo} alt="" width={28} height={28} className="size-7" />
+              </span>
+              <div className="leading-tight">
+                <div className="text-xs text-muted-foreground font-medium">
+                  {username || "Sepolia Wallet"}
+                </div>
+                <div className="flex items-center gap-1.5 text-sm font-semibold">
+                  {truncateAddress(address)}
+                  {copied ? (
+                    <Check className="size-3 text-success" />
+                  ) : (
+                    <Copy className="size-3 text-muted-foreground" />
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold">
-                {truncateAddress(address)}
-                {copied ? (
-                  <Check className="size-3 text-success" />
-                ) : (
-                  <Copy className="size-3 text-muted-foreground" />
-                )}
-              </div>
-            </div>
-          </button>
+            </button>
 
-          <div className="flex items-center gap-1 text-muted-foreground">
-            {headerAction ?? (
-              <>
-                <button
-                  onClick={showSecret}
-                  className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-amber-400"
-                  title="View Seed Phrase / Private Key"
-                >
-                  <Key className="size-4" />
-                </button>
-                <button
-                  onClick={logout}
-                  className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-rose-400"
-                  title="Log out / Delete wallet"
-                >
-                  <LogOut className="size-4" />
-                </button>
-              </>
-            )}
-          </div>
-        </header>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              {headerAction ?? (
+                <>
+                  <button
+                    onClick={showSecret}
+                    className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-amber-400"
+                    title="View Seed Phrase / Private Key"
+                  >
+                    <Key className="size-4" />
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="size-9 rounded-full hover:bg-secondary flex items-center justify-center transition-colors text-rose-400"
+                    title="Log out / Delete wallet"
+                  >
+                    <LogOut className="size-4" />
+                  </button>
+                </>
+              )}
+            </div>
+          </header>
         )}
 
         {/* Content */}

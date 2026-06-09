@@ -62,19 +62,28 @@ function ActivityPage() {
 
         let etherscanTxs: Tx[] = [];
 
-        const processData = (data: any, isInternal: boolean) => {
-          if (data.status === "1" && data.result) {
-            return data.result.map((tx: any) => ({
-              id: tx.hash + (isInternal ? "-int" : ""),
-              type: tx.from.toLowerCase() === address.toLowerCase() ? "send" : "receive",
-              token: "ETH",
-              amount: parseFloat(ethers.formatEther(tx.value)),
-              to: tx.to,
-              from: tx.from,
-              date: new Date(parseInt(tx.timeStamp) * 1000).toISOString(),
-              status: tx.isError === "0" ? "confirmed" : "failed",
-              hash: tx.hash,
-            }));
+        const processData = (data: { status: string; result?: unknown[] }, isInternal: boolean) => {
+          if (data.status === "1" && Array.isArray(data.result)) {
+            return data.result.map(
+              (tx: {
+                hash: string;
+                from: string;
+                to: string;
+                value: string;
+                timeStamp: string;
+                isError: string;
+              }) => ({
+                id: tx.hash + (isInternal ? "-int" : ""),
+                type: tx.from.toLowerCase() === address.toLowerCase() ? "send" : "receive",
+                token: "ETH",
+                amount: parseFloat(ethers.formatEther(tx.value)),
+                to: tx.to,
+                from: tx.from,
+                date: new Date(parseInt(tx.timeStamp) * 1000).toISOString(),
+                status: tx.isError === "0" ? "confirmed" : "failed",
+                hash: tx.hash,
+              }),
+            );
           }
           return [];
         };
